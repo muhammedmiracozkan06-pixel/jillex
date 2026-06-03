@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Jıllex Find - Arama Sonuçları</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fff; }
+        header { display: flex; align-items: center; padding: 15px 30px; border-bottom: 1px solid #ebebeb; position: fixed; top: 0; left: 0; right: 0; background: #fff; z-index: 100; }
+        .logo-area { font-weight: bold; font-size: 20px; color: #1a0dab; text-decoration: none; margin-right: 20px; }
+        .search-input { width: 100%; max-width: 600px; padding: 10px 15px; border: 1px solid #dfe1e5; border-radius: 24px; outline: none; }
+        main { max-width: 650px; margin-left: 150px; margin-top: 90px; padding: 20px; }
+        .result-item { margin-bottom: 28px; }
+        .result-url { font-size: 14px; color: #202124; display: block; }
+        .result-title { font-size: 19px; color: #1a0dab; text-decoration: none; }
+        .result-title:hover { text-decoration: underline; }
+        .result-snippet { font-size: 14px; color: #4d5156; margin-top: 4px; line-height: 1.58; }
+        .bot-badge { background: #e8f0fe; color: #1a0dab; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 8px; }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/" class="logo-area">JILLEX <span style="color:#4d5156; font-size:12px;">FIND</span></a>
+        <form onsubmit="executeSearch(event)" style="width:100%;"><input type="text" id="queryInput" class="search-input" required></form>
+    </header>
+    <main>
+        <div id="status" style="font-size:13px; color:#70757a; margin-bottom:20px;">Yükleniyor...</div>
+        <div id="resultsContainer"></div>
+    </main>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('q');
+        if(query) { document.getElementById('queryInput').value = query; fetchResults(query); }
+        function executeSearch(e) { e.preventDefault(); window.location.href = '?q=' + encodeURIComponent(document.getElementById('queryInput').value); }
+        async function fetchResults(q) {
+            const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+            const data = await res.json();
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '';
+            document.getElementById('status').innerText = `${data.total_results} sonuç listelendi.`;
+            data.results.forEach(item => {
+                container.innerHTML += `
+                    <div class="result-item">
+                        <span class="result-url">${item.url}</span>
+                        <a href="${item.url}" target="_blank" class="result-title">${item.title} ${item.isBotMemory ? '<span class="bot-badge">c-xellas hafızası</span>':''}</a>
+                        <div class="result-snippet">${item.snippet}</div>
+                    </div>`;
+            });
+        }
+    </script>
+</body>
+</html>
