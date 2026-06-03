@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "routes": [
+    { "src": "/api/search", "dest": "/api/search.js" },
+    { "src": "/api/index-bot", "dest": "/api/index-bot.js" },
+    { "src": "/(.*)", "dest": "/public/$1" }
+  ]
+}
