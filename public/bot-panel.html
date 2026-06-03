@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>c-xellas Bot Panel</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f9fa; padding: 40px; display: flex; justify-content: center; }
+        .panel { background: #fff; border: 1px solid #dadce0; border-radius: 8px; padding: 30px; width: 100%; max-width: 500px; }
+        input[type="url"] { width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; margin-bottom: 15px; }
+        button { background: #1a0dab; color: white; border: none; padding: 12px; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; }
+        #logOutput { margin-top: 20px; padding: 12px; background: #202124; color: #00ff00; font-family: monospace; font-size: 12px; border-radius: 4px; min-height: 60px; }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <h2>c-xellas İndeksleyici Bot Paneli</h2>
+        <form onsubmit="triggerBot(event)">
+            <label style="font-weight:bold;">Hedef URL:</label>
+            <input type="url" id="targetUrl" placeholder="https://ornek-site.com" required>
+            <button type="submit" id="btn">c-xellas Botunu Gönder</button>
+        </form>
+        <div id="logOutput">Sistem hazır. Emir bekleniyor...</div>
+    </div>
+    <script>
+        async function triggerBot(e){
+            e.preventDefault();
+            const url = document.getElementById('targetUrl').value;
+            const log = document.getElementById('logOutput');
+            log.innerText = "[c-xellas] Hedefe sızılıyor, veriler toplanıyor...";
+            const res = await fetch('/api/index-bot', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({url}) });
+            const data = await res.json();
+            if(data.success) { log.innerText = `[BAŞARI] c-xellas hafızaya aldı:\nBaşlık: ${data.indexed.title}`; }
+            else { log.innerText = `[HATA] Bot başarısız oldu.`; }
+        }
+    </script>
+</body>
+</html>
