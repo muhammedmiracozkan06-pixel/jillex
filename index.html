@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JILLEX Find</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="top-left">JILLEX Find</div>
+
+    <div class="nav-buttons">
+        <button onclick="history.back()">◀</button>
+        <button onclick="history.forward()">▶</button>
+        <button onclick="location.reload()">🏠</button>
+    </div>
+
+    <div class="container">
+        <h1>JILLEX</h1>
+
+        <div class="search-bar">
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="JILLEX Find ile ara..."
+            >
+
+            <button id="searchBtn">
+                Ara
+            </button>
+
+            <button
+                class="ai-btn"
+                onclick="window.open('https://pilotwebai.vercel.app','_blank')"
+            >
+                AI
+            </button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
