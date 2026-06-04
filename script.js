@@ -1,45 +1,66 @@
-// Google Programmable Search Engine Bilgilerin
-const API_KEY = 'AIzaSyDzzLl0Y0qoo9LD_gndsaAZbQWc4mrqnMI';
-const CX_ID = '5737e65ea478a419a';
-
-document.getElementById('search-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const query = document.getElementById('search-input').value.trim();
-    if (!query) return;
-
-    searchJillex(query);
-});
-
-async function searchJillex(query) {
+document.addEventListener('DOMContentLoaded', () => {
+    const searchForm = document.getElementById('search-form');
+    const searchInput = document.getElementById('search-input');
     const resultsContainer = document.getElementById('results-container');
-    resultsContainer.innerHTML = '<div class="loading">Jillex arıyor...</div>';
 
-    const url = `https://www.googleapis.com/customsearch/v1?key=${API_KEY}&cx=${CX_ID}&q=${encodeURIComponent(query)}`;
+    searchForm.addEventListener('submit', async function(e) {
+        // Sayfanın yenilenmesini ve URL'in /? olmasını kesin olarak engeller
+        e.preventDefault(); 
+        
+        const query = searchInput.value.trim();
+        if (!query) return;
 
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
+        resultsContainer.innerHTML = '<div class="loading">Jillex arıyor...</div>';
 
-        resultsContainer.innerHTML = ''; // Yükleniyor yazısını temizle
+        // DuckDuckGo Ücretsiz ve Key-siz JSON API'si
+        const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
 
-        if (data.items && data.items.length > 0) {
-            data.items.forEach(item => {
-                const resultItem = document.createElement('div');
-                resultItem.className = 'result-item';
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
 
-                resultItem.innerHTML = `
-                    <a href="${item.link}" target="_blank">${item.title}</a>
-                    <div class="display-link">${item.link}</div>
-                    <p>${item.snippet}</p>
-                `;
-                resultsContainer.appendChild(resultItem);
-            });
-        } else {
-            resultsContainer.innerHTML = '<div class="no-results">Sonuç bulunamadı.</div>';
+            resultsContainer.innerHTML = ''; // Yükleniyor yazısını sil
+
+            let hasResults = false;
+
+            // 1. Durum: Doğrudan soyut/özet bilgi varsa (Instant Answer)
+            if (data.AbstractText) {
+                hasResults = true;
+                createResultCard(data.Heading, data.AbstractURL, data.AbstractText);
+            }
+
+            // 2. Durum: İlgili diğer sonuçlar/linkler varsa
+            if (data.RelatedTopics && data.RelatedTopics.length > 0) {
+                data.RelatedTopics.forEach(item => {
+                    // DuckDuckGo bazen alt başlık grupları döndürür, onları eliyoruz
+                    if (item.FirstURL && item.Text) {
+                        hasResults = true;
+                        // Başlık ve açıklama ayıklama
+                        const title = item.Text.split(' - ')[0] || 'Sonuç';
+                        createResultCard(title, item.FirstURL, item.Text);
+                    }
+                });
+            }
+
+            if (!hasResults) {
+                resultsContainer.innerHTML = '<div class="no-results">Aradığınız kritere uygun sonuç bulunamadı.</div>';
+            }
+
+        } catch (error) {
+            console.error('Arama motoru hatası:', error);
+            resultsContainer.innerHTML = '<div class="no-results">Arama servisine bağlanılamadı. Lütfen tekrar deneyin.</div>';
         }
-    } catch (error) {
-        console.error('Arama hatası:', error);
-        resultsContainer.innerHTML = '<div class="no-results">Arama sırasında bir hata oluştu.</div>';
+    });
+
+    // Kart oluşturma fonksiyonu
+    function createResultCard(title, url, snippet) {
+        const resultItem = document.createElement('div');
+        resultItem.className = 'result-item';
+        resultItem.innerHTML = `
+            <a href="${url}" target="_blank">${title}</a>
+            <div class="display-link">${url}</div>
+            <p>${snippet}</p>
+        `;
+        resultsContainer.appendChild(resultItem);
     }
-}
+});
