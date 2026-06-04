@@ -1,60 +1,45 @@
-const API_KEY = "AIzaSyDzzLl0Y0qoo9LD_gndsaAZbQWc4mrqnMI";
-const CX = "5737e65ea478a419a";
+// Google Programmable Search Engine Bilgilerin
+const API_KEY = 'AIzaSyDzzLl0Y0qoo9LD_gndsaAZbQWc4mrqnMI';
+const CX_ID = '5737e65ea478a419a';
 
-const searchInput = document.getElementById("searchInput");
-const searchBtn = document.getElementById("searchBtn");
-const resultsDiv = document.getElementById("results");
+document.getElementById('search-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const query = document.getElementById('search-input').value.trim();
+    if (!query) return;
 
-searchBtn.addEventListener("click", search);
-searchInput.addEventListener("keydown", e => {
-    if(e.key === "Enter"){
-        search();
-    }
+    searchJillex(query);
 });
 
-async function search() {
+async function searchJillex(query) {
+    const resultsContainer = document.getElementById('results-container');
+    resultsContainer.innerHTML = '<div class="loading">Jillex arıyor...</div>';
 
-    const query = searchInput.value.trim();
+    const url = `https://www.googleapis.com/customsearch/v1?key=${API_KEY}&cx=${CX_ID}&q=${encodeURIComponent(query)}`;
 
-    if(!query) return;
-
-    resultsDiv.innerHTML = "<p>Aranıyor...</p>";
-
-    try{
-
-        const response = await fetch(
-            `https://www.googleapis.com/customsearch/v1?key=${API_KEY}&cx=${CX}&q=${encodeURIComponent(query)}`
-        );
-
+    try {
+        const response = await fetch(url);
         const data = await response.json();
 
-        resultsDiv.innerHTML = "";
+        resultsContainer.innerHTML = ''; // Yükleniyor yazısını temizle
 
-        if(!data.items){
-            resultsDiv.innerHTML = "<p>Sonuç bulunamadı.</p>";
-            return;
+        if (data.items && data.items.length > 0) {
+            data.items.forEach(item => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+
+                resultItem.innerHTML = `
+                    <a href="${item.link}" target="_blank">${item.title}</a>
+                    <div class="display-link">${item.link}</div>
+                    <p>${item.snippet}</p>
+                `;
+                resultsContainer.appendChild(resultItem);
+            });
+        } else {
+            resultsContainer.innerHTML = '<div class="no-results">Sonuç bulunamadı.</div>';
         }
-
-        data.items.forEach(item => {
-
-            const div = document.createElement("div");
-            div.className = "result";
-
-            div.innerHTML = `
-                <a href="${item.link}" target="_blank">
-                    ${item.title}
-                </a>
-                <p>${item.snippet}</p>
-            `;
-
-            resultsDiv.appendChild(div);
-        });
-
-    } catch(err){
-
-        console.error(err);
-
-        resultsDiv.innerHTML =
-            "<p>Arama sırasında hata oluştu.</p>";
+    } catch (error) {
+        console.error('Arama hatası:', error);
+        resultsContainer.innerHTML = '<div class="no-results">Arama sırasında bir hata oluştu.</div>';
     }
 }
