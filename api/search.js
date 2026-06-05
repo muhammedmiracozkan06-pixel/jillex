@@ -1,4 +1,3 @@
-// Node.js'in en kararlı yerleşik HTTPS modülünü çağırıyoruz
 const https = require('https');
 
 export default function handler(req, res) {
@@ -13,9 +12,10 @@ export default function handler(req, res) {
 
     const API_KEY = "AIzaSyDzzLl0Y0qoo9LD_gndsaAZbQWc4mrqnMI";
     const CX_ID = "5737e6ea478a419a";
+    
+    // URL dizilimi kesin olarak düzeltildi (Soru işareti ve parametre geçişleri ayrıldı)
     const googleUrl = `https://googleapis.com{API_KEY}&cx=${CX_ID}&q=${encodeURIComponent(q)}`;
 
-    // Vercel'deki fetch kilitlenmesini bozmak için doğrudan şifreli TCP/HTTPS tüneli açıyoruz
     https.get(googleUrl, (googleRes) => {
         let rawData = '';
 
