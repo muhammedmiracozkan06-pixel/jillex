@@ -3,20 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jillex </title>
-    <link rel="stylesheet" href="style.css">
+    <title>JILLEX Search Engine</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #0c0c0e;
+            color: #ffffff;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .brand-name {
+            font-size: 4rem;
+            font-weight: 900;
+            letter-spacing: -2px;
+            margin-bottom: 25px;
+            margin-top: 5vh;
+            background: linear-gradient(45deg, #00f2fe, #4facfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0px 4px 30px rgba(0, 242, 254, 0.3);
+        }
+
+        .search-box {
+            display: flex;
+            width: 100%;
+            max-width: 650px;
+            background: #16161a;
+            border: 1px solid #2d2d34;
+            border-radius: 50px;
+            padding: 6px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            margin-bottom: 40px;
+        }
+
+        .search-box:focus-within {
+            border-color: #00f2fe;
+            box-shadow: 0 10px 30px rgba(0, 242, 254, 0.25);
+        }
+
+        .search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            color: #fff;
+        }
+
+        .search-input::placeholder {
+            color: #5c5c66;
+        }
+
+        .search-btn {
+            background: linear-gradient(45deg, #00f2fe, #4facfe);
+            border: none;
+            outline: none;
+            color: #0c0c0e;
+            font-weight: bold;
+            font-size: 1rem;
+            padding: 0 35px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .search-btn:hover {
+            transform: scale(1.03);
+        }
+
+        #results {
+            width: 100%;
+            max-width: 650px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .result-item {
+            background: #16161a;
+            padding: 22px;
+            border-radius: 16px;
+            border: 1px solid #2d2d34;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .result-item:hover {
+            border-color: #4facfe;
+            transform: translateY(-2px);
+        }
+
+        .result-title {
+            font-size: 1.3rem;
+            color: #00f2fe;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .result-title:hover {
+            text-decoration: underline;
+        }
+
+        .result-text {
+            color: #b5b5c6;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .status-text {
+            text-align: center;
+            color: #5c5c66;
+            font-size: 1.1rem;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">Jillex</div>
-        <form id="search-form" class="search-box">
-            <input type="text" id="search-input" placeholder="Jillex'te arayın..." required autocomplete="off">
-            <button type="submit">Ara</button>
-        </form>
 
-        <div id="results-container" class="results-container"></div>
+    <div class="brand-name">JILLEX</div>
+
+    <div class="search-box">
+        <input type="text" id="query" class="search-input" placeholder="Türkiye, Yapay Zeka veya Uzay yazıp deneyin..." autocomplete="off">
+        <button onclick="jillexSearch()" class="search-btn">Ara</button>
     </div>
 
-    <script src="script.js"></script>
+    <div id="results"></div>
+
+    <script>
+        document.getElementById('query').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                jillexSearch();
+            }
+        });
+
+        async function jillexSearch() {
+            const query = document.getElementById('query').value.trim();
+            const resultsContainer = document.getElementById('results');
+            
+            if (!query) return;
+
+            resultsContainer.innerHTML = "<p class='status-text'>JILLEX güvenli ağda arıyor...</p>";
+
+            // Vercel üzerinde güvenle çalışacak HTTPS Wikipedia API bağlantısı
+            const url = `https://wikipedia.org{encodeURIComponent(query)}&format=json&origin=*`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Ağ yanıtı düzgün değil.");
+                
+                const data = await response.json();
+                resultsContainer.innerHTML = ""; 
+
+                if (!data.query || !data.query.search || data.query.search.length === 0) {
+                    resultsContainer.innerHTML = "<p class='status-text'>JILLEX bu kelime için sonuç bulamadı.</p>";
+                    return;
+                }
+
+                data.query.search.forEach(item => {
+                    const cleanSnippet = item.snippet.replace(/(<([^>]+)>)/gi, "");
+                    const pageLink = `https://wikipedia.org{item.pageid}`;
+
+                    resultsContainer.innerHTML += `
+                        <div class="result-item">
+                            <a class="result-title" href="${pageLink}" target="_blank">${item.title}</a>
+                            <p class="result-text">${cleanSnippet}...</p>
+                        </div>
+                    `;
+                });
+
+            } catch (error) {
+                resultsContainer.innerHTML = `<p class='status-text' style='color: #ff4e50;'>Hata: ${error.message}<br><small>Eğer bu hatayı yerel dosyada görüyorsanız, lütfen projeyi Vercel'e yükleyin.</small></p>`;
+                console.error("Hata Detayı:", error);
+            }
+        }
+    </script>
 </body>
 </html>
