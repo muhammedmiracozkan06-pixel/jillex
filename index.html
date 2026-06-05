@@ -3,71 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JILLEX Protected Search</title>
+    <title>JILLEX Ultimate Search</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: #0c0c0e; color: #ffffff; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        .brand-name { font-size: 4rem; font-weight: 900; letter-spacing: -2px; margin-bottom: 25px; margin-top: 5vh; background: linear-gradient(45deg, #00f2fe, #4facfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0px 4px 30px rgba(0, 242, 254, 0.3); }
-        .search-box { display: flex; width: 100%; max-width: 650px; background: #16161a; border: 1px solid #2d2d34; border-radius: 50px; padding: 6px; transition: all 0.3s ease; box-shadow: 0 10px 25px rgba(0,0,0,0.4); margin-bottom: 40px; }
-        .search-box:focus-within { border-color: #00f2fe; box-shadow: 0 10px 30px rgba(0, 242, 254, 0.25); }
-        .search-input { flex: 1; background: transparent; border: none; outline: none; padding: 15px 25px; font-size: 1.1rem; color: #fff; }
-        .search-btn { background: linear-gradient(45deg, #00f2fe, #4facfe); border: none; outline: none; color: #0c0c0e; font-weight: bold; font-size: 1rem; padding: 0 35px; border-radius: 40px; cursor: pointer; }
-        #results { width: 100%; max-width: 650px; display: flex; flex-direction: column; gap: 20px; }
-        .result-item { background: #16161a; padding: 22px; border-radius: 16px; border: 1px solid #2d2d34; }
-        .result-title { font-size: 1.3rem; color: #00f2fe; text-decoration: none; font-weight: 600; display: inline-block; margin-bottom: 8px; }
-        .result-text { color: #b5b5c6; font-size: 1rem; line-height: 1.5; }
-        .status-text { text-align: center; color: #5c5c66; font-size: 1.1rem; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #0c0c0e;
+            color: #ffffff;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .brand-name {
+            font-size: 4rem;
+            font-weight: 900;
+            letter-spacing: -2px;
+            margin-bottom: 25px;
+            margin-top: 5vh;
+            background: linear-gradient(45deg, #00f2fe, #4facfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0px 4px 30px rgba(0, 242, 254, 0.3);
+        }
+
+        /* JILLEX Arama Motoru Kapsayıcısı */
+        .jillex-engine-wrapper {
+            width: 100%;
+            max-width: 700px;
+            background: #16161a;
+            border: 1px solid #2d2d34;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        /* Google Tasarımını JILLEX Temasına Uydurmak İçin CSS Ezme Kuralları */
+        .gsc-control-cse {
+            background-color: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+        }
+        .gsc-search-box-tools .gsc-search-box .gsc-input {
+            background: #0c0c0e !important;
+            border: 1px solid #2d2d34 !important;
+            border-radius: 50px !important;
+            color: #fff !important;
+            padding: 10px 20px !important;
+        }
+        .gsc-search-button-v2 {
+            background: linear-gradient(45deg, #00f2fe, #4facfe) !important;
+            border: none !important;
+            border-radius: 50px !important;
+            padding: 12px 25px !important;
+        }
+        .gsc-search-button-v2 svg {
+            fill: #0c0c0e !important;
+        }
+        .gsc-webResult.gsc-result {
+            background: #1e1e24 !important;
+            border: 1px solid #2d2d34 !important;
+            border-radius: 12px !important;
+            padding: 15px !important;
+            margin-bottom: 15px !important;
+        }
+        .gs-title, .gs-title * {
+            color: #00f2fe !important;
+            text-decoration: none !important;
+            font-size: 1.15rem !important;
+        }
+        .gs-snippet {
+            color: #b5b5c6 !important;
+            font-size: 0.95rem !important;
+        }
+        .gsc-cursor-page {
+            color: #00f2fe !important;
+            background: #16161a !important;
+            border: 1px solid #2d2d34 !important;
+            padding: 8px 12px !important;
+            border-radius: 6px !important;
+        }
     </style>
 </head>
 <body>
 
+    <!-- JILLEX Logo -->
     <div class="brand-name">JILLEX</div>
 
-    <div class="search-box">
-        <input type="text" id="query" class="search-input" placeholder="Güvenli tünel üzerinden arayın..." autocomplete="off">
-        <button onclick="jillexSearch()" class="search-btn">Ara</button>
+    <!-- Güvenli ve Engellenemez Arama Alanı -->
+    <div class="jillex-engine-wrapper">
+        <!-- Google Programmable Search Element Kodu -->
+        <script async src="https://google.com"></script>
+        <div class="gcse-search"></div>
     </div>
 
-    <div id="results"></div>
-
-    <script>
-        document.getElementById('query').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') jillexSearch();
-        });
-
-        async function jillexSearch() {
-            const query = document.getElementById('query').value.trim();
-            const resultsContainer = document.getElementById('results');
-            if (!query) return;
-
-            resultsContainer.innerHTML = "<p class='status-text'>JILLEX Güvenli Tünel Aktif (Sunucu üzerinden aranıyor)...</p>";
-
-            try {
-                // Doğrudan dış dünyaya değil, kendi Vercel backend'imize istek atıyoruz
-                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-                const data = await response.json();
-                
-                resultsContainer.innerHTML = ""; 
-
-                if (data.error || !data.hits || data.hits.length === 0) {
-                    resultsContainer.innerHTML = "<p class='status-text'>Sonuç bulunamadı veya sunucu engellendi.</p>";
-                    return;
-                }
-
-                data.hits.slice(0, 10).forEach(item => {
-                    const targetLink = item.url || `https://ycombinator.com{item.objectID}`;
-                    resultsContainer.innerHTML += `
-                        <div class="result-item">
-                            <a class="result-title" href="${targetLink}" target="_blank">${item.title}</a>
-                            <p class="result-text">JILLEX Korumalı Sunucu Kanalı ile güvenli bağlantı sağlandı.</p>
-                        </div>
-                    `;
-                });
-
-            } catch (error) {
-                resultsContainer.innerHTML = `<p class='status-text' style='color: #ff4e50;'>Tünel Hatası: Veri köprüsü kurulamadı.</p>`;
-            }
-        }
-    </script>
 </body>
 </html>
