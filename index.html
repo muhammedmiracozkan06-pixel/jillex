@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JILLEX Custom Search</title>
+    <title>JILLEX </title>
     <style>
         * {
             box-sizing: border-box;
@@ -139,74 +139,74 @@
 </head>
 <body>
 
-    <!-- JILLEX Marka İsmi -->
     <div class="brand-name">JILLEX</div>
 
-    <!-- Arama Çubuğu -->
     <div class="search-box">
-        <input type="text" id="query" class="search-input" placeholder="JILLEX motoruyla tüm web'de arayın..." autocomplete="off" autofocus>
+        <input type="text" id="query" class="search-input" placeholder="JILLEX ile güvenli kanaldan arayın..." autocomplete="off" autofocus>
         <button onclick="jillexSearch()" class="search-btn">Ara</button>
     </div>
 
-    <!-- Sonuçların Listeleneceği Alan -->
     <div id="results"></div>
 
     <script>
-        // Enter tuşu entegrasyonu
         document.getElementById('query').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 jillexSearch();
             }
         });
 
-        // Sağladığınız resmi API Key ve CX Kimlik Bilgileri
         const API_KEY = "AIzaSyDzzLl0Y0qoo9LD_gndsaAZbQWc4mrqnMI";
         const CX_ID = "5737e6ea478a419a";
 
-        async function jillexSearch() {
+        // 1. Küresel bir veri işleme fonksiyonu (Callback) tanımlıyoruz
+        window.handleGoogleResponse = function(data) {
+            const resultsContainer = document.getElementById('results');
+            resultsContainer.innerHTML = ""; 
+
+            if (data.error) {
+                resultsContainer.innerHTML = `<p class='status-text' style='color: #ff4e50;'>Google API Hatası: ${data.error.message}<br><small>Lütfen API anahtarınızın Custom Search API yetkisinin açık olduğunu doğrulayın.</small></p>`;
+                return;
+            }
+
+            if (!data.items || data.items.length === 0) {
+                resultsContainer.innerHTML = "<p class='status-text'>Uygun sonuç bulunamadı.</p>";
+                return;
+            }
+
+            data.items.forEach(item => {
+                resultsContainer.innerHTML += `
+                    <div class="result-item">
+                        <a class="result-title" href="${item.link}" target="_blank">${item.title}</a>
+                        <div class="result-link">${item.displayLink}</div>
+                        <p class="result-text">${item.snippet}</p>
+                    </div>
+                `;
+            });
+        };
+
+        function jillexSearch() {
             const query = document.getElementById('query').value.trim();
             const resultsContainer = document.getElementById('results');
             
             if (!query) return;
 
-            resultsContainer.innerHTML = "<p class='status-text'>JILLEX verileri işliyor...</p>";
+            resultsContainer.innerHTML = "<p class='status-text'>JILLEX siber ağları tarıyor...</p>";
 
-            // Resmi Google Custom Search REST API URL'i
-            const url = `https://googleapis.com{API_KEY}&cx=${CX_ID}&q=${encodeURIComponent(query)}`;
+            // Önceki aramadan kalan eski betik elementlerini temizliyoruz
+            const oldScript = document.getElementById('jillex-google-script');
+            if (oldScript) oldScript.remove();
 
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                resultsContainer.innerHTML = ""; // Yükleniyor yazısını temizle
+            // 2. Güvenlik duvarlarını aşmak için dinamik bir script elemanı enjekte ediyoruz
+            // Sonuna eklenen &callback=handleGoogleResponse parametresi CORS kısıtlamalarını tamamen baypas eder.
+            const script = document.createElement('script');
+            script.id = 'jillex-google-script';
+            script.src = `https://googleapis.com{API_KEY}&cx=${CX_ID}&q=${encodeURIComponent(query)}&callback=handleGoogleResponse`;
+            
+            script.onerror = function() {
+                resultsContainer.innerHTML = "<p class='status-text' style='color: #ff4e50;'>Ağ geçidi engellendi. Tarayıcı eklentilerinizi kontrol edin.</p>";
+            };
 
-                // Google'dan hata dönerse ekrana bas (Örn: kota dolumu veya yanlış key durumunda)
-                if (data.error) {
-                    resultsContainer.innerHTML = `<p class='status-text' style='color: #ff4e50;'>Google API Hatası: ${data.error.message}</p>`;
-                    return;
-                }
-
-                // Sonuç yoksa uyarı ver
-                if (!data.items || data.items.length === 0) {
-                    resultsContainer.innerHTML = "<p class='status-text'>Aradığınız kelimeye uygun sonuç bulunamadı.</p>";
-                    return;
-                }
-
-                // Gelen ham JSON verilerini JILLEX kartlarına dönüştürüyoruz
-                data.items.forEach(item => {
-                    resultsContainer.innerHTML += `
-                        <div class="result-item">
-                            <a class="result-title" href="${item.link}" target="_blank">${item.title}</a>
-                            <div class="result-link">${item.displayLink}</div>
-                            <p class="result-text">${item.snippet}</p>
-                        </div>
-                    `;
-                });
-
-            } catch (error) {
-                resultsContainer.innerHTML = "<p class='status-text' style='color: #ff4e50;'>Bağlantı hatası oluştu. Lütfen internetinizi kontrol edin.</p>";
-                console.error("Hata Detayı:", error);
-            }
+            document.body.appendChild(script);
         }
     </script>
 </body>
