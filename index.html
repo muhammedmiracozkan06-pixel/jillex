@@ -14,9 +14,11 @@
         .search-input::placeholder { color: #5c5c66; }
         .search-btn { background: linear-gradient(45deg, #00f2fe, #4facfe); border: none; outline: none; color: #0c0c0e; font-weight: bold; font-size: 1rem; padding: 0 35px; border-radius: 40px; cursor: pointer; }
         #results { width: 100%; max-width: 650px; display: flex; flex-direction: column; gap: 20px; }
-        .result-item { background: #16161a; padding: 22px; border-radius: 16px; border: 1px solid #2d2d34; }
+        .result-item { background: #16161a; padding: 22px; border-radius: 16px; border: 1px solid #2d2d34; transition: transform 0.2s ease; }
+        .result-item:hover { transform: translateY(-2px); border-color: #4facfe; }
         .result-title { font-size: 1.3rem; color: #00f2fe; text-decoration: none; font-weight: 600; display: inline-block; margin-bottom: 6px; }
-        .result-link { color: #5c5c66; font-size: 0.85rem; margin-bottom: 8px; }
+        .result-title:hover { text-decoration: underline; }
+        .result-link { color: #5c5c66; font-size: 0.85rem; margin-bottom: 8px; word-break: break-all; }
         .result-text { color: #b5b5c6; font-size: 1rem; line-height: 1.5; }
         .status-text { text-align: center; color: #5c5c66; font-size: 1.1rem; }
     </style>
@@ -26,7 +28,7 @@
     <div class="brand-name">JILLEX</div>
 
     <div class="search-box">
-        <input type="text" id="query" class="search-input" placeholder="JILLEX Engine ile tüm web'de arayın..." autocomplete="off" autofocus>
+        <input type="text" id="query" class="search-input" placeholder="JILLEX Sunucusu üzerinden arayın..." autocomplete="off" autofocus>
         <button onclick="jillexSearch()" class="search-btn">Ara</button>
     </div>
 
@@ -42,32 +44,45 @@
             const resultsContainer = document.getElementById('results');
             if (!query) return;
 
-            resultsContainer.innerHTML = "<p class='status-text'>JILLEX Sunucusu verileri işliyor...</p>";
+            resultsContainer.innerHTML = "<p class='status-text'>JILLEX Güvenli Kanal: Sunucu verileri çözümlüyor...</p>";
 
             try {
-                // Doğrudan dış siteye değil, kendi projemizin sunucu ucuna (api/search) güvenli bağlantı kuruyoruz
                 const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
                 const data = await response.json();
                 
                 resultsContainer.innerHTML = ""; 
 
-                if (data.error || !data.items || data.items.length === 0) {
-                    resultsContainer.innerHTML = `<p class='status-text' style='color: #ff4e50;'>Arama Sonucu: Bilgi bulunamadı veya API yetkilendirmesi eksik.</p>`;
+                // 1. Durum: Sunucudan yapılandırılmış bir hata objesi döndüyse ekrana bas
+                if (data.error === true) {
+                    resultsContainer.innerHTML = `
+                        <div class="result-item" style="border-color: #ff4e50;">
+                            <h3 style="color: #ff4e50; margin-bottom: 8px;">Google API Bildirimi</h3>
+                            <p class="result-text">Mesaj: ${data.message}</p>
+                            <p class="result-text" style="color: #5c5c66; font-size: 0.85rem; margin-top: 5px;">Hata Kodu: ${data.reason}</p>
+                        </div>
+                    `;
                     return;
                 }
 
+                // 2. Durum: Gelen veri temiz olmasına rağmen arama sonucu yoksa bilgi ver
+                if (!data.items || data.items.length === 0) {
+                    resultsContainer.innerHTML = "<p class='status-text'>Aradığınız kelimeye ait hiçbir sonuç bulunamadı.</p>";
+                    return;
+                }
+
+                // 3. Durum: Başarılı senaryo, kartları ekrana çiz
                 data.items.forEach(item => {
                     resultsContainer.innerHTML += `
                         <div class="result-item">
                             <a class="result-title" href="${item.link}" target="_blank">${item.title}</a>
                             <div class="result-link">${item.displayLink}</div>
-                            <p class="result-text">${item.snippet}</p>
+                            <p class="result-text">${item.snippet || "Açıklama metni bulunmuyor."}</p>
                         </div>
                     `;
                 });
 
             } catch (error) {
-                resultsContainer.innerHTML = "<p class='status-text' style='color: #ff4e50;'>Bağlantı hatası oluştu.</p>";
+                resultsContainer.innerHTML = `<p class='status-text' style='color: #ff4e50;'>Bağlantı Köprüsü Koptu: ${error.message}</p>`;
             }
         }
     </script>
