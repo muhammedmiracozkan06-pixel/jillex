@@ -3,138 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JILLEX </title>
+    <title>JILLEX Search Engine</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: #0c0c0e;
-            color: #ffffff;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .brand-name {
-            font-size: 4rem;
-            font-weight: 900;
-            letter-spacing: -2px;
-            margin-bottom: 25px;
-            margin-top: 5vh;
-            background: linear-gradient(45deg, #00f2fe, #4facfe);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0px 4px 30px rgba(0, 242, 254, 0.3);
-        }
-
-        .search-box {
-            display: flex;
-            width: 100%;
-            max-width: 650px;
-            background: #16161a;
-            border: 1px solid #2d2d34;
-            border-radius: 50px;
-            padding: 6px;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-            margin-bottom: 40px;
-        }
-
-        .search-box:focus-within {
-            border-color: #00f2fe;
-            box-shadow: 0 10px 30px rgba(0, 242, 254, 0.25);
-        }
-
-        .search-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            outline: none;
-            padding: 15px 25px;
-            font-size: 1.1rem;
-            color: #fff;
-        }
-
-        .search-input::placeholder {
-            color: #5c5c66;
-        }
-
-        .search-btn {
-            background: linear-gradient(45deg, #00f2fe, #4facfe);
-            border: none;
-            outline: none;
-            color: #0c0c0e;
-            font-weight: bold;
-            font-size: 1rem;
-            padding: 0 35px;
-            border-radius: 40px;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-
-        .search-btn:hover {
-            transform: scale(1.03);
-        }
-
-        #results {
-            width: 100%;
-            max-width: 650px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .result-item {
-            background: #16161a;
-            padding: 22px;
-            border-radius: 16px;
-            border: 1px solid #2d2d34;
-            transition: transform 0.2s ease, border-color 0.2s ease;
-        }
-
-        .result-item:hover {
-            border-color: #4facfe;
-            transform: translateY(-2px);
-        }
-
-        .result-title {
-            font-size: 1.3rem;
-            color: #00f2fe;
-            text-decoration: none;
-            font-weight: 600;
-            display: inline-block;
-            margin-bottom: 6px;
-        }
-
-        .result-title:hover {
-            text-decoration: underline;
-        }
-
-        .result-link {
-            color: #5c5c66;
-            font-size: 0.85rem;
-            margin-bottom: 8px;
-            word-break: break-all;
-        }
-
-        .result-text {
-            color: #b5b5c6;
-            font-size: 1rem;
-            line-height: 1.5;
-        }
-
-        .status-text {
-            text-align: center;
-            color: #5c5c66;
-            font-size: 1.1rem;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #0c0c0e; color: #ffffff; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .brand-name { font-size: 4rem; font-weight: 900; letter-spacing: -2px; margin-bottom: 25px; margin-top: 5vh; background: linear-gradient(45deg, #00f2fe, #4facfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0px 4px 30px rgba(0, 242, 254, 0.3); }
+        .search-box { display: flex; width: 100%; max-width: 650px; background: #16161a; border: 1px solid #2d2d34; border-radius: 50px; padding: 6px; transition: all 0.3s ease; box-shadow: 0 10px 25px rgba(0,0,0,0.4); margin-bottom: 40px; }
+        .search-box:focus-within { border-color: #00f2fe; box-shadow: 0 10px 30px rgba(0, 242, 254, 0.25); }
+        .search-input { flex: 1; background: transparent; border: none; outline: none; padding: 15px 25px; font-size: 1.1rem; color: #fff; }
+        .search-input::placeholder { color: #5c5c66; }
+        .search-btn { background: linear-gradient(45deg, #00f2fe, #4facfe); border: none; outline: none; color: #0c0c0e; font-weight: bold; font-size: 1rem; padding: 0 35px; border-radius: 40px; cursor: pointer; }
+        #results { width: 100%; max-width: 650px; display: flex; flex-direction: column; gap: 20px; }
+        .result-item { background: #16161a; padding: 22px; border-radius: 16px; border: 1px solid #2d2d34; }
+        .result-title { font-size: 1.3rem; color: #00f2fe; text-decoration: none; font-weight: 600; display: inline-block; margin-bottom: 6px; }
+        .result-link { color: #5c5c66; font-size: 0.85rem; margin-bottom: 8px; }
+        .result-text { color: #b5b5c6; font-size: 1rem; line-height: 1.5; }
+        .status-text { text-align: center; color: #5c5c66; font-size: 1.1rem; }
     </style>
 </head>
 <body>
@@ -142,7 +26,7 @@
     <div class="brand-name">JILLEX</div>
 
     <div class="search-box">
-        <input type="text" id="query" class="search-input" placeholder="JILLEX ile güvenli kanaldan arayın..." autocomplete="off" autofocus>
+        <input type="text" id="query" class="search-input" placeholder="JILLEX Engine ile tüm web'de arayın..." autocomplete="off" autofocus>
         <button onclick="jillexSearch()" class="search-btn">Ara</button>
     </div>
 
@@ -150,63 +34,41 @@
 
     <script>
         document.getElementById('query').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                jillexSearch();
-            }
+            if (e.key === 'Enter') jillexSearch();
         });
 
-        const API_KEY = "AIzaSyDzzLl0Y0qoo9LD_gndsaAZbQWc4mrqnMI";
-        const CX_ID = "5737e6ea478a419a";
-
-        // 1. Küresel bir veri işleme fonksiyonu (Callback) tanımlıyoruz
-        window.handleGoogleResponse = function(data) {
-            const resultsContainer = document.getElementById('results');
-            resultsContainer.innerHTML = ""; 
-
-            if (data.error) {
-                resultsContainer.innerHTML = `<p class='status-text' style='color: #ff4e50;'>Google API Hatası: ${data.error.message}<br><small>Lütfen API anahtarınızın Custom Search API yetkisinin açık olduğunu doğrulayın.</small></p>`;
-                return;
-            }
-
-            if (!data.items || data.items.length === 0) {
-                resultsContainer.innerHTML = "<p class='status-text'>Uygun sonuç bulunamadı.</p>";
-                return;
-            }
-
-            data.items.forEach(item => {
-                resultsContainer.innerHTML += `
-                    <div class="result-item">
-                        <a class="result-title" href="${item.link}" target="_blank">${item.title}</a>
-                        <div class="result-link">${item.displayLink}</div>
-                        <p class="result-text">${item.snippet}</p>
-                    </div>
-                `;
-            });
-        };
-
-        function jillexSearch() {
+        async function jillexSearch() {
             const query = document.getElementById('query').value.trim();
             const resultsContainer = document.getElementById('results');
-            
             if (!query) return;
 
-            resultsContainer.innerHTML = "<p class='status-text'>JILLEX siber ağları tarıyor...</p>";
+            resultsContainer.innerHTML = "<p class='status-text'>JILLEX Sunucusu verileri işliyor...</p>";
 
-            // Önceki aramadan kalan eski betik elementlerini temizliyoruz
-            const oldScript = document.getElementById('jillex-google-script');
-            if (oldScript) oldScript.remove();
+            try {
+                // Doğrudan dış siteye değil, kendi projemizin sunucu ucuna (api/search) güvenli bağlantı kuruyoruz
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                resultsContainer.innerHTML = ""; 
 
-            // 2. Güvenlik duvarlarını aşmak için dinamik bir script elemanı enjekte ediyoruz
-            // Sonuna eklenen &callback=handleGoogleResponse parametresi CORS kısıtlamalarını tamamen baypas eder.
-            const script = document.createElement('script');
-            script.id = 'jillex-google-script';
-            script.src = `https://googleapis.com{API_KEY}&cx=${CX_ID}&q=${encodeURIComponent(query)}&callback=handleGoogleResponse`;
-            
-            script.onerror = function() {
-                resultsContainer.innerHTML = "<p class='status-text' style='color: #ff4e50;'>Ağ geçidi engellendi. Tarayıcı eklentilerinizi kontrol edin.</p>";
-            };
+                if (data.error || !data.items || data.items.length === 0) {
+                    resultsContainer.innerHTML = `<p class='status-text' style='color: #ff4e50;'>Arama Sonucu: Bilgi bulunamadı veya API yetkilendirmesi eksik.</p>`;
+                    return;
+                }
 
-            document.body.appendChild(script);
+                data.items.forEach(item => {
+                    resultsContainer.innerHTML += `
+                        <div class="result-item">
+                            <a class="result-title" href="${item.link}" target="_blank">${item.title}</a>
+                            <div class="result-link">${item.displayLink}</div>
+                            <p class="result-text">${item.snippet}</p>
+                        </div>
+                    `;
+                });
+
+            } catch (error) {
+                resultsContainer.innerHTML = "<p class='status-text' style='color: #ff4e50;'>Bağlantı hatası oluştu.</p>";
+            }
         }
     </script>
 </body>
