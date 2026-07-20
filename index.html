@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JILLEX Find </title>
+    <title>JILLEX</title>
     <style>
         :root {
             --bg-color: #ffffff;
@@ -23,8 +23,6 @@
             display: flex;
             flex-direction: column;
         }
-        
-        /* ANA EKRAN DÜZENİ */
         .search-container {
             flex: 1;
             display: flex;
@@ -42,10 +40,7 @@
             letter-spacing: -4px;
             user-select: none;
         }
-        .search-wrapper {
-            width: 100%;
-            max-width: 584px; /* Google ile birebir genişlik */
-        }
+        .search-wrapper { width: 100%; max-width: 584px; }
         .search-box-row {
             display: flex;
             border: 1px solid var(--border-color);
@@ -75,25 +70,14 @@
             cursor: pointer;
             padding: 0 10px;
         }
-
-        /* ARAMA YAPILDIĞINDAKİ DÜZEN */
         body.results-mode .search-container {
             justify-content: flex-start;
             align-items: flex-start;
             padding: 20px 20px 0 20px;
             flex: 0 0 auto;
         }
-        body.results-mode .logo-area h1 {
-            font-size: 32px;
-            margin: 0 20px 0 0;
-            letter-spacing: -1px;
-        }
-        body.results-mode .main-header-block {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            max-width: 800px;
-        }
+        body.results-mode .logo-area h1 { font-size: 32px; margin: 0 20px 0 0; letter-spacing: -1px; }
+        body.results-mode .main-header-block { display: flex; align-items: center; width: 100%; max-width: 800px; }
         
         .google-tabs {
             display: none;
@@ -104,38 +88,18 @@
             margin-top: 15px;
         }
         body.results-mode .google-tabs { display: flex; gap: 20px; }
-        .tab-item {
-            padding: 8px 0;
-            color: #5f6368;
-            font-size: 14px;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-        }
-        .tab-item.active {
-            color: var(--primary-blue);
-            border-bottom-color: var(--primary-blue);
-            font-weight: 500;
-        }
+        .tab-item { padding: 8px 0; color: #5f6368; font-size: 14px; cursor: pointer; border-bottom: 3px solid transparent; }
+        .tab-item.active { color: var(--primary-blue); border-bottom-color: var(--primary-blue); font-weight: 500; }
 
-        /* SONUÇLAR */
-        #results {
-            max-width: 652px;
-            margin-left: 130px;
-            padding: 20px;
-            box-sizing: border-box;
-            flex: 1;
-        }
+        #results { max-width: 652px; margin-left: 130px; padding: 20px; box-sizing: border-box; flex: 1; }
         body:not(.results-mode) #results { display: none; }
 
+        /* Sitelerin Logolu Kart Tasarımı */
         .result-card { margin-bottom: 28px; }
-        .result-card cite {
-            font-size: 12px;
-            color: #202124;
-            font-style: normal;
-            display: block;
-            margin-bottom: 4px;
-        }
-        .result-card a { color: #1a0dab; text-decoration: none; font-size: 20px; }
+        .result-header { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+        .result-logo { width: 18px; height: 18px; border-radius: 4px; object-fit: contain; background: #f1f3f4; }
+        .result-card cite { font-size: 12px; color: #202124; font-style: normal; }
+        .result-card a { color: #1a0dab; text-decoration: none; font-size: 20px; display: block; margin-top: 2px; }
         .result-card a:hover { text-decoration: underline; }
         .result-card p { margin: 4px 0 0 0; font-size: 14px; color: #4d5156; line-height: 1.58; }
 
@@ -144,21 +108,29 @@
         .image-card img { width: 100%; height: 120px; object-fit: cover; }
         .image-card span { display: block; padding: 6px; font-size: 11px; color: #3c4043; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+        /* Diğer Sonuçlar Butonu */
+        .more-results-btn {
+            display: none;
+            width: 100%;
+            max-width: 652px;
+            margin: 20px 0 40px 130px;
+            padding: 10px 0;
+            background: #f1f3f4;
+            border: 1px solid #dadce0;
+            color: #3c4043;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: center;
+        }
+        .more-results-btn:hover { background: #e8eaed; }
+        body.results-mode .more-results-btn { display: block; }
+
         .status-msg { color: #70757a; font-style: italic; }
 
-        /* FOOTER */
-        footer {
-            background-color: var(--footer-bg);
-            border-top: 1px solid #e4e4e4;
-            padding: 12px 20px;
-            font-size: 14px;
-            color: var(--footer-text);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        footer { background-color: var(--footer-bg); border-top: 1px solid #e4e4e4; padding: 12px 20px; font-size: 14px; color: var(--footer-text); display: flex; justify-content: space-between; align-items: center; }
         .footer-left { display: flex; align-items: center; gap: 20px; }
-        .engine-btn { color: var(--primary-blue); cursor: pointer; font-weight: 500; }
         select { background: transparent; border: 1px solid var(--border-color); color: var(--footer-text); border-radius: 4px; padding: 2px 6px; outline: none; cursor: pointer; }
     </style>
 </head>
@@ -166,9 +138,7 @@
 
     <div class="search-container">
         <div class="main-header-block">
-            <div class="logo-area">
-                <h1 id="jillexLogo" style="cursor:pointer;" onclick="goHome()">JILLEX</h1>
-            </div>
+            <div class="logo-area"><h1 id="jillexLogo" style="cursor:pointer;" onclick="goHome()">JILLEX</h1></div>
             <div class="search-wrapper">
                 <div class="search-box-row">
                     <input type="text" id="query" autocomplete="off">
@@ -180,12 +150,11 @@
         <div class="google-tabs">
             <div class="tab-item active" id="tab-all" onclick="changeCategory('general', this)">Tümü</div>
             <div class="tab-item" id="tab-img" onclick="changeCategory('images', this)">Görseller</div>
-            <div class="tab-item" id="tab-news" onclick="changeCategory('news', this)">Haberler</div>
-            <div class="tab-item" id="tab-shop" onclick="changeCategory('shopping', this)">Alışveriş</div>
         </div>
     </div>
 
     <div id="results"></div>
+    <button class="more-results-btn" id="loadMoreBtn" onclick="loadNextPage()">Diğer Sonuçlar</button>
 
     <footer>
         <div class="footer-left">
@@ -195,160 +164,148 @@
                 <select id="countrySelect" onchange="updateInterfaceLanguage()">
                     <option value="tr-TR">Türkçe</option>
                     <option value="en-US">English</option>
-                    <option value="de-DE">Deutsch</option>
-                    <option value="fr-FR">Français</option>
                 </select>
             </div>
-            <div>
-                <span id="lblEngine">Arama</span>: 
-                <span id="engineToggle" class="engine-btn" onclick="toggleEngine()">SearXNG</span>
-            </div>
         </div>
-        <div id="thanksContainer"></div>
     </footer>
 
     <script>
-        let currentEngine = 'SearXNG';
         let currentCategory = 'general';
+        let currentPage = 1;
 
         const languages = {
-            'tr-TR': { search: "Ara", all: "Tümü", img: "Görseller", news: "Haberler", shop: "Alışveriş", lang: "Dil", engine: "Arama", ph: "İnternette arama yapın...", copy: "© Wind Developers", loading: "JILLEX aranıyor...", noRes: "Sonuç bulunamadı.", fail: "Sunucu hatası oluştu.", thank: "Thank you" },
-            'en-US': { search: "Search", all: "All", img: "Images", news: "News", shop: "Shopping", lang: "Language", engine: "Search Engine", ph: "Search the web...", copy: "© Wind Developers", loading: "JILLEX searching...", noRes: "No results found.", fail: "Server connection failed.", thank: "Thank you" },
-            'de-DE': { search: "Suche", all: "Alle", img: "Bilder", news: "Nachrichten", shop: "Einkaufen", lang: "Sprache", engine: "Suchmaschine", ph: "Im Web suchen...", copy: "© Wind Developers", loading: "JILLEX sucht...", noRes: "Keine Ergebnisse gefunden.", fail: "Serverfehler aufgetreten.", thank: "Thank you" },
-            'fr-FR': { search: "Recherche", all: "Tout", img: "Images", news: "Actualités", shop: "Shopping", lang: "Langue", engine: "Moteur", ph: "Rechercher sur le web...", copy: "© Wind Developers", loading: "JILLEX recherche...", noRes: "Aucun résultat trouvé.", fail: "Échec de la connexion.", thank: "Thank you" }
+            'tr-TR': { search: "Ara", all: "Tümü", img: "Görseller", lang: "Dil", ph: "İnternette arama yapın...", copy: "© Wind Developers", loading: "JILLEX aranıyor...", noRes: "Sonuç bulunamadı.", fail: "Sunucu hatası oluştu.", more: "Diğer Sonuçlar" },
+            'en-US': { search: "Search", all: "All", img: "Images", lang: "Language", ph: "Search the web...", copy: "© Wind Developers", loading: "JILLEX searching...", noRes: "No results found.", fail: "Server connection failed.", more: "More Results" }
         };
 
-        // Dil yükleme fonksiyonu
         function updateInterfaceLanguage() {
             const langCode = document.getElementById('countrySelect').value;
             const dict = languages[langCode] || languages['tr-TR'];
-            
             document.getElementById('searchBtn').innerText = dict.search;
             document.getElementById('tab-all').innerText = dict.all;
             document.getElementById('tab-img').innerText = dict.img;
-            document.getElementById('tab-news').innerText = dict.news;
-            document.getElementById('tab-shop').innerText = dict.shop;
             document.getElementById('lblLang').innerText = dict.lang;
-            document.getElementById('lblEngine').innerText = dict.engine;
             document.getElementById('query').placeholder = dict.ph;
             document.getElementById('lblCopyright').innerText = dict.copy;
+            document.getElementById('loadMoreBtn').innerText = dict.more;
 
             if (document.getElementById('query').value.trim() && document.body.classList.contains('results-mode')) {
-                executeSearch();
+                currentPage = 1;
+                executeSearch(false);
             }
         }
 
-        // Enter Algılama
         document.getElementById('query').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') triggerSearchAction();
         });
 
-        // URL Değiştirerek Arama Tetikleme (Google Tarzı)
         function triggerSearchAction() {
             const query = document.getElementById('query').value.trim();
             if (!query) return;
-            // URL yapısını /search?q= veri şeklinde günceller
+            currentPage = 1;
             const newUrl = `${window.location.origin}${window.location.pathname}?q=${encodeURIComponent(query)}`;
             window.history.pushState({ path: newUrl }, '', newUrl);
-            executeSearch();
+            executeSearch(false);
         }
 
-        // Sayfa URL parametresini kontrol etme (Doğrudan linkle aramalar için)
-        window.addEventListener('popstate', checkUrlParams);
-        function checkUrlParams() {
+        window.addEventListener('popstate', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const queryParam = urlParams.get('q');
             if (queryParam) {
                 document.getElementById('query').value = queryParam;
-                executeSearch();
-            } else {
-                goHome();
-            }
-        }
+                executeSearch(false);
+            } else { goHome(); }
+        });
 
-        async function executeSearch() {
+        async function executeSearch(isLoadMore = false) {
             const query = document.getElementById('query').value.trim();
             const resultsDiv = document.getElementById('results');
-            const thanksContainer = document.getElementById('thanksContainer');
             const selectedLanguage = document.getElementById('countrySelect').value;
             const dict = languages[selectedLanguage] || languages['tr-TR'];
 
             document.body.classList.add('results-mode');
-            resultsDiv.innerHTML = `<div class="status-msg">${dict.loading}</div>`;
+            
+            if (!isLoadMore) {
+                resultsDiv.innerHTML = `<div class="status-msg">${dict.loading}</div>`;
+            }
 
-            // Güvenli istek rotası: Kendi Vercel Serverless fonksiyonumuza yönlendiriyoruz
-            let apiEndpoint = `/api/search?q=${encodeURIComponent(query)}&categories=${currentCategory}&language=${selectedLanguage}&engine=${currentEngine}`;
+            let apiEndpoint = `/api/search?q=${encodeURIComponent(query)}&category=${currentCategory}&page=${currentPage}`;
 
             try {
                 const response = await fetch(apiEndpoint);
                 if (!response.ok) throw new Error();
                 const data = await response.json();
                 
-                resultsDiv.innerHTML = '';
-                thanksContainer.innerHTML = `${dict.thank} <span style="font-weight:bold;">${currentEngine}</span>`;
+                if (!isLoadMore) resultsDiv.innerHTML = '';
 
                 if (!data.results || data.results.length === 0) {
-                    resultsDiv.innerHTML = `<div class="status-msg">${dict.noRes}</div>`;
+                    if(!isLoadMore) resultsDiv.innerHTML = `<div class="status-msg">${dict.noRes}</div>`;
                     return;
                 }
 
                 if (currentCategory === 'images') {
-                    const imgGrid = document.createElement('div');
-                    imgGrid.className = 'image-results';
+                    let imgGrid = resultsDiv.querySelector('.image-results');
+                    if (!imgGrid) {
+                        imgGrid = document.createElement('div');
+                        imgGrid.className = 'image-results';
+                        resultsDiv.appendChild(imgGrid);
+                    }
                     data.results.forEach(item => {
-                        const imgUrl = item.img_src || item.thumbnail_src || item.url;
-                        if (imgUrl && imgUrl.startsWith('http')) {
-                            const card = document.createElement('div');
-                            card.className = 'image-card';
-                            card.innerHTML = `
-                                <a href="${item.url}" target="_blank"><img src="${imgUrl}" onerror="this.src='https://placehold.co/150x120/f8f9fa/1a73e8?text=Image'"></a>
-                                <span>${item.title || 'Image'}</span>
-                            `;
-                            imgGrid.appendChild(card);
-                        }
+                        const card = document.createElement('div');
+                        card.className = 'image-card';
+                        card.innerHTML = `
+                            <a href="${item.url}" target="_blank"><img src="${item.img_src}" onerror="this.src='https://placehold.co/150x120/f8f9fa/1a73e8?text=Image'"></a>
+                            <span>${item.title}</span>
+                        `;
+                        imgGrid.appendChild(card);
                     });
-                    resultsDiv.appendChild(imgGrid);
                 } else {
-                    data.results.slice(0, 15).forEach(item => {
+                    data.results.forEach(item => {
                         const card = document.createElement('div');
                         card.className = 'result-card';
                         card.innerHTML = `
-                            <cite>${item.url.substring(0, 70)}</cite>
+                            <div class="result-header">
+                                <img src="${item.logo}" class="result-logo" onerror="this.style.display='none'">
+                                <cite>${item.url.substring(0, 60)}</cite>
+                            </div>
                             <a href="${item.url}" target="_blank">${item.title}</a>
-                            <p>${item.content || ''}</p>
+                            <p>${item.content}</p>
                         `;
                         resultsDiv.appendChild(card);
                     });
                 }
             } catch (error) {
-                resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">${dict.fail}</div>`;
+                if(!isLoadMore) resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">${dict.fail}</div>`;
             }
         }
 
-        function toggleEngine() {
-            currentEngine = currentEngine === 'SearXNG' ? 'Searx' : 'SearXNG';
-            document.getElementById('engineToggle').innerText = currentEngine;
-            if (document.getElementById('query').value.trim()) executeSearch();
+        function loadNextPage() {
+            currentPage++;
+            executeSearch(true);
         }
 
         function changeCategory(cat, element) {
             currentCategory = cat;
+            currentPage = 1;
             document.querySelectorAll('.tab-item').forEach(item => item.classList.remove('active'));
             element.classList.add('active');
-            if (document.getElementById('query').value.trim()) executeSearch();
+            if (document.getElementById('query').value.trim()) executeSearch(false);
         }
 
         function goHome() {
             document.body.classList.remove('results-mode');
             document.getElementById('query').value = '';
             document.getElementById('results').innerHTML = '';
-            document.getElementById('thanksContainer').innerHTML = '';
             const homeUrl = `${window.location.origin}${window.location.pathname}`;
             window.history.pushState({ path: homeUrl }, '', homeUrl);
         }
 
-        // Sayfa ilk yüklendiğinde linkte arama parametresi var mı kontrol et
-        checkUrlParams();
+        updateInterfaceLanguage();
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('q')) {
+            document.getElementById('query').value = urlParams.get('q');
+            executeSearch(false);
+        }
     </script>
 </body>
 </html>
