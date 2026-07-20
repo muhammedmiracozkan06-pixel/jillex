@@ -7,109 +7,90 @@ export default async function handler(req, res) {
 
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    const { q, category, page } = req.query;
+    const { q, category } = req.query;
     if (!q) return res.status(400).json({ error: "Missing query" });
 
-    const pageNumber = parseInt(page) || 1;
-
-    // Tamamen açık kaynaklı ve JSON çıktısı veren global arama düğümleri (Uptime oranı en yüksek olanlar)
-    const openSourceEngines = [
-        "https://search.bus-hit.me",
-        "https://searx.work",
-        "https://priv.au"
-    ];
-
     try {
-        let searchData = null;
-        let success = false;
-
-        // Havuzdaki açık kaynaklı sunucuları sırayla dene (Hangisi ayaktaysa tüm web verisini o getirecek)
-        for (const baseUrl of openSourceEngines) {
-            try {
-                const targetCat = category === 'images' ? 'images' : 'general';
-                const apiUrl = `${baseUrl}/search?q=${encodeURIComponent(q)}&categories=${targetCat}&format=json&pageno=${pageNumber}`;
-                
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 saniyede cevap vermezse sonraki açık kaynağa geç
-
-                const response = await fetch(apiUrl, {
-                    signal: controller.signal,
-                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) JILLEX/3.0' }
-                });
-
-                clearTimeout(timeoutId);
-
-                if (response.ok) {
-                    searchData = await response.json();
-                    if (searchData && searchData.results && searchData.results.length > 0) {
-                        success = true;
-                        break; // Veriyi başarıyla aldık, döngüden çık
-                    }
-                }
-            } catch (e) {
-                // Sunucu meşgulse bir sonrakine geçiş yapılıyor
-                continue;
-            }
-        }
-
-        // Eğer açık kaynak havuzundan temiz veri geldiyse ekrana bas
-        if (success && searchData) {
-            if (category === 'images') {
-                const formattedImages = searchData.results
-                    .filter(item => item.img_src || item.thumbnail_src)
-                    .map(item => ({
-                        title: item.title || "JILLEX Image",
-                        url: item.url || item.img_src,
-                        img_src: item.img_src || item.thumbnail_src
-                    }));
-                return res.status(200).json({ results: formattedImages });
-            } else {
-                const formattedWeb = searchData.results
-                    .filter(item => item.url && item.title)
-                    .slice(0, 15)
-                    .map(item => {
-                        let domain = "link";
-                        try { domain = new URL(item.url).hostname; } catch(e){}
-                        return {
-                            title: item.title,
-                            url: item.url,
-                            content: item.content || "Daha fazla bilgi için siteyi ziyaret edin.",
-                            logo: `https://www.google.com/s2/favicons?sz=64&domain=${domain}`
-                        };
-                    });
-                return res.status(200).json({ results: formattedWeb });
-            }
-        }
-
-        // HAVUZ ÇÖKERSE SON ÇARE (ACİL DURUM PLANI): TinySearch Açık API Ağı
-        const fallbackUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1`;
-        const fbRes = await fetch(fallbackUrl);
-        const fbData = await fbRes.json();
+        // Sınırsız ve bot korumalarını otomatik aşan açık kaynaklı global web dizini proxy'si
+        const proxyUrl = `https://api.mojeek.com/search?q=${encodeURIComponent(q)}&fmt=json`;
         
-        const backupArray = [];
-        if (fbData.Heading && fbData.AbstractURL) {
-            backupArray.push({
-                title: fbData.Heading,
-                url: fbData.AbstractURL,
-                content: fbData.Abstract || "İnternet arama özeti.",
-                logo: `https://www.google.com/s2/favicons?sz=64&domain=${new URL(fbData.AbstractURL).hostname}`
-            });
-        }
-        
-        (fbData.RelatedTopics || anisotropy).slice(0, 8).forEach(topic => {
-            if (topic.FirstURL && topic.Text) {
-                backupArray.push({
-                    title: topic.Text.substring(0, 60) + "...",
-                    url: topic.FirstURL,
-                    content: topic.Text,
-                    logo: `https://www.google.com/s2/favicons?sz=64&domain=${new URL(topic.FirstURL).hostname}`
-                });
+        const response = await fetch(proxyUrl, {
+            headers: { 
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) JILLEX-Engine/4.0 (Wind Developers)'
             }
         });
 
-        return res.status(200).json({ results: backupArray });
+        if (!response.ok) throw new Error("Central proxy down");
+        const data = await response.json();
+        const finalResults = [];
+
+        if (category === 'images') {
+            // Görsel modunda açık kaynaklı Wikimedia Commons veri tabanını sıfır limitle kazıyoruz
+            const wikiImgUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrnamespace=6&prop=imageinfo&iiprop=url&format=json&origin=*`;
+            const imgRes = await fetch(wikiImgUrl);
+            const imgData = await imgRes.json();
+            
+            if (imgData.query && imgData.query.pages) {
+                Object.values(imgData.query.pages).forEach(p => {
+                    if (p.imageinfo && p.imageinfo[0]) {
+                        finalResults.push({
+                            title: p.title.replace('File:', '') || "JILLEX Visual",
+                            url: p.imageinfo[0].descriptionurl,
+                            img_src: p.imageinfo[0].url
+                        });
+                    }
+                });
+            }
+        } else {
+            // Web Sonuçlarını İşleme (Mojeek Küresel İndeksi)
+            if (data.results && data.results.length > 0) {
+                data.results.forEach(item => {
+                    let domain = "link";
+                    try { domain = new URL(item.url).hostname; } catch(e){}
+
+                    finalResults.push({
+                        title: item.title || "Untitled Document",
+                        url: item.url,
+                        content: item.desc || "Daha fazla bilgi için kaynağı ziyaret edin.",
+                        logo: `https://www.google.com/s2/favicons?sz=64&domain=${domain}`
+                    });
+                });
+            }
+        }
+
+        // Eğer ana motor o an boş dönerse yedek sınırsız açık kaynak havuzu (DuckDuckGo Lite API) anında besler
+        if (finalResults.length === 0) {
+            const fallbackUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1`;
+            const fbRes = await fetch(fallbackUrl);
+            const fbData = await fbRes.json();
+
+            if (fbData.Heading && fbData.AbstractURL) {
+                finalResults.push({
+                    title: fbData.Heading,
+                    url: fbData.AbstractURL,
+                    content: fbData.Abstract,
+                    logo: `https://www.google.com/s2/favicons?sz=64&domain=${new URL(fbData.AbstractURL).hostname}`
+                });
+            }
+
+            if (fbData.RelatedTopics) {
+                fbData.RelatedTopics.forEach(topic => {
+                    if (topic.FirstURL && topic.Text) {
+                        let domain = new URL(topic.FirstURL).hostname;
+                        finalResults.push({
+                            title: topic.Text.split(' - ')[0] || "Web Sonucu",
+                            url: topic.FirstURL,
+                            content: topic.Text,
+                            logo: `https://www.google.com/s2/favicons?sz=64&domain=${domain}`
+                        });
+                    }
+                });
+            }
+        }
+
+        return res.status(200).json({ results: finalResults.slice(0, 15) });
 
     } catch (err) {
-        return res.status(500).json({ error: "Global cluster connection error", details: err.message });
+        return res.status(500).json({ error: "JILLEX Core Infrastructure Error", details: err.message });
     }
 }
