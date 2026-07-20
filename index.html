@@ -157,39 +157,24 @@
             resultsDiv.innerHTML = `<div class="status-msg">JILLEX sonuçları getiriyor...</div>`;
 
             try {
-                // DuckDuckGo'nun resmi anlık yanıt API'sini çağırıyoruz. CORS derdi yoktur, JSON döner.
-                const response = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&pretty=1&skip_disambig=1&origin=*`);
+                // Kendi sunucu tarafı endpoint'imizi çağırıyoruz (api/search.js).
+                // Bu, tarayıcıdan doğrudan üçüncü taraf arama servislerine gitmenin
+                // getirdiği CORS engelini ortadan kaldırır: fetch sunucuda yapılır,
+                // tarayıcıya sadece hazır JSON döner.
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
                 if (!response.ok) throw new Error("Ana servis yanıt vermedi.");
-                
+
                 const data = await response.json();
                 resultsDiv.innerHTML = '';
 
-                let hasResults = false;
-
-                // 1. Doğrudan özet tanımı varsa onu en başa bas
-                if (data.Heading && data.AbstractText) {
-                    appendWebCard(data.Heading, data.AbstractURL || "https://duckduckgo.com", data.AbstractText);
-                    hasResults = true;
-                }
-
-                // 2. İlgili konuları (Related Topics) listele
-                if (data.RelatedTopics && data.RelatedTopics.length > 0) {
-                    data.RelatedTopics.forEach(topic => {
-                        if (topic.Text && topic.FirstURL) {
-                            // Başlık ve snippet ayırma
-                            const parts = topic.Text.split(' - ');
-                            const title = parts[0] || query;
-                            const snippet = parts.slice(1).join(' - ') || topic.Text;
-
-                            appendWebCard(title, topic.FirstURL, snippet);
-                            hasResults = true;
+                if (Array.isArray(data) && data.length > 0) {
+                    data.forEach(item => {
+                        if (item.title && item.url) {
+                            appendWebCard(item.title, item.url, item.snippet || "");
                         }
                     });
-                }
-
-                // Eğer DuckDuckGo API buraya kadar boş döndüyse hiç bekletmeden tarayıcı tabanlı Wikipedia'ya geç
-                if (!hasResults) {
-                    await executeFallbackWikipedia(query, resultsDiv);
+                } else {
+                    resultsDiv.innerHTML = `<div class="status-msg">Sonuç bulunamadı. Lütfen farklı terimlerle arayın.</div>`;
                 }
 
             } catch (error) {
