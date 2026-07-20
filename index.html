@@ -12,7 +12,28 @@
             --border-color: #dadce0;
             --footer-bg: #f8f9fa;
             --footer-text: #70757a;
+            --card-title: #1a0dab;
+            --card-cite: #202124;
+            --card-snippet: #4d5156;
+            --panel-bg: #ffffff;
+            --panel-shadow: rgba(32,33,36,0.28);
+            --hover-bg: #f1f3f4;
         }
+        body.dark-mode {
+            --bg-color: #202124;
+            --text-color: #e8eaed;
+            --primary-blue: #8ab4f8;
+            --border-color: #3c4043;
+            --footer-bg: #171717;
+            --footer-text: #9aa0a6;
+            --card-title: #8ab4f8;
+            --card-cite: #bdc1c6;
+            --card-snippet: #bdc1c6;
+            --panel-bg: #2d2e30;
+            --panel-shadow: rgba(0,0,0,0.5);
+            --hover-bg: #3c4043;
+        }
+        * { box-sizing: border-box; }
         body {
             margin: 0; padding: 0;
             background-color: var(--bg-color);
@@ -20,7 +41,40 @@
             font-family: Roboto, arial, sans-serif;
             min-height: 100vh;
             display: flex; flex-direction: column;
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
+
+        /* Ayarlar simgesi */
+        .settings-trigger {
+            position: fixed; top: 16px; right: 16px; z-index: 100;
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; background: transparent; border: none;
+            color: var(--footer-text); font-size: 20px;
+        }
+        .settings-trigger:hover { background: var(--hover-bg); }
+        .settings-panel {
+            position: fixed; top: 60px; right: 16px; z-index: 100;
+            background: var(--panel-bg); border: 1px solid var(--border-color);
+            border-radius: 12px; box-shadow: 0 2px 10px var(--panel-shadow);
+            padding: 18px 20px; width: 240px; display: none;
+        }
+        .settings-panel.open { display: block; }
+        .settings-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .settings-row:last-child { margin-bottom: 0; }
+        .settings-row label { font-size: 14px; color: var(--text-color); }
+        .settings-row select {
+            background: var(--bg-color); color: var(--text-color);
+            border: 1px solid var(--border-color); border-radius: 6px;
+            padding: 4px 6px; font-size: 13px;
+        }
+        .switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; inset: 0; background: var(--border-color); border-radius: 22px; transition: 0.2s; }
+        .slider:before { content: ""; position: absolute; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+        .switch input:checked + .slider { background: var(--primary-blue); }
+        .switch input:checked + .slider:before { transform: translateX(18px); }
+
         .search-container {
             flex: 1; display: flex; flex-direction: column;
             align-items: center; justify-content: center;
@@ -32,19 +86,19 @@
             color: var(--primary-blue); margin: 0 0 30px 0;
             letter-spacing: -4px; user-select: none;
         }
-        .search-wrapper { width: 100%; max-width: 584px; }
+        .search-wrapper { width: 100%; max-width: 720px; }
         .search-box-row {
             display: flex; border: 1px solid var(--border-color);
-            border-radius: 24px; padding: 6px 18px; background: #fff;
+            border-radius: 24px; padding: 8px 20px; background: var(--panel-bg);
         }
         .search-box-row:hover, .search-box-row:focus-within {
-            box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+            box-shadow: 0 1px 6px var(--panel-shadow);
             border-color: rgba(223,225,229,0);
         }
         .search-box-row input {
             flex: 1; background: transparent; border: none;
             outline: none; color: var(--text-color);
-            font-size: 16px; padding: 10px 5px;
+            font-size: 17px; padding: 12px 6px;
         }
         .search-box-row button {
             background: transparent; border: none;
@@ -56,15 +110,16 @@
             padding: 20px 20px 0 20px; flex: 0 0 auto;
         }
         body.results-mode .logo-area h1 { font-size: 32px; margin: 0 20px 0 0; letter-spacing: -1px; }
-        body.results-mode .main-header-block { display: flex; align-items: center; width: 100%; max-width: 800px; }
-        
+        body.results-mode .main-header-block { display: flex; align-items: center; width: 100%; max-width: 900px; }
+        body.results-mode .search-wrapper { max-width: 600px; }
+
         .google-tabs {
             display: none; width: 100%; max-width: 650px;
             margin-left: 110px; border-bottom: 1px solid var(--border-color);
-            margin-top: 15px;
+            margin-top: 15px; gap: 20px;
         }
-        body.results-mode .google-tabs { display: flex; gap: 20px; }
-        .tab-item { padding: 8px 0; color: #5f6368; font-size: 14px; cursor: pointer; border-bottom: 3px solid transparent; }
+        body.results-mode .google-tabs { display: flex; }
+        .tab-item { padding: 8px 0; color: var(--footer-text); font-size: 14px; cursor: pointer; border-bottom: 3px solid transparent; user-select: none; }
         .tab-item.active { color: var(--primary-blue); border-bottom-color: var(--primary-blue); font-weight: 500; }
 
         #results { max-width: 652px; margin-left: 130px; padding: 20px; box-sizing: border-box; flex: 1; }
@@ -72,18 +127,58 @@
 
         .result-card { margin-bottom: 28px; }
         .result-header { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
-        .result-logo { width: 18px; height: 18px; border-radius: 4px; object-fit: contain; background: #f1f3f4; }
-        .result-card cite { font-size: 12px; color: #202124; font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 500px; }
-        .result-card a { color: #1a0dab; text-decoration: none; font-size: 20px; display: block; margin-top: 2px; }
+        .result-logo { width: 18px; height: 18px; border-radius: 4px; object-fit: contain; background: var(--hover-bg); }
+        .result-card cite { font-size: 12px; color: var(--card-cite); font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 500px; }
+        .result-card a { color: var(--card-title); text-decoration: none; font-size: 20px; display: block; margin-top: 2px; }
         .result-card a:hover { text-decoration: underline; }
-        .result-card p { margin: 4px 0 0 0; font-size: 14px; color: #4d5156; line-height: 1.58; }
+        .result-card p { margin: 4px 0 0 0; font-size: 14px; color: var(--card-snippet); line-height: 1.58; }
 
-        .status-msg { color: #70757a; font-style: normal; font-size: 14px; padding: 10px 0; }
-        footer { background-color: var(--footer-bg); border-top: 1px solid #dadce0; padding: 12px 20px; font-size: 14px; color: var(--footer-text); display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+        #results.images-mode { max-width: 900px; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+        .image-card { display: block; border-radius: 8px; overflow: hidden; background: var(--hover-bg); text-decoration: none; }
+        .image-card img { width: 100%; height: 140px; object-fit: cover; display: block; }
+        .image-card span { display: block; font-size: 12px; color: var(--text-color); padding: 6px 8px; }
+
+        .status-msg { color: var(--footer-text); font-style: normal; font-size: 14px; padding: 10px 0; }
+
+        .load-more-wrap { max-width: 652px; margin-left: 130px; padding: 0 20px 40px; }
+        body.results-mode.images-active .load-more-wrap,
+        body.results-mode.images-active #results { max-width: 900px; }
+        .load-more-btn {
+            display: block; margin: 10px 0 30px; padding: 10px 24px;
+            border: 1px solid var(--border-color); border-radius: 20px;
+            background: var(--panel-bg); color: var(--primary-blue);
+            font-size: 14px; cursor: pointer;
+        }
+        .load-more-btn:hover { box-shadow: 0 1px 6px var(--panel-shadow); }
+        .load-more-btn:disabled { opacity: 0.5; cursor: default; }
+
+        footer { background-color: var(--footer-bg); border-top: 1px solid var(--border-color); padding: 12px 20px; font-size: 14px; color: var(--footer-text); display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
         .footer-left { display: flex; align-items: center; gap: 20px; }
     </style>
 </head>
 <body>
+
+    <button class="settings-trigger" id="settingsTrigger" onclick="toggleSettingsPanel()" title="Ayarlar">⚙️</button>
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-row">
+            <label for="darkModeToggle">Karanlık mod</label>
+            <label class="switch">
+                <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="settings-row">
+            <label for="langSelect">Sonuç dili</label>
+            <select id="langSelect" onchange="changeLanguage(this.value)">
+                <option value="all">Tümü</option>
+                <option value="tr">Türkçe</option>
+                <option value="en">English</option>
+                <option value="de">Deutsch</option>
+                <option value="fr">Français</option>
+                <option value="es">Español</option>
+            </select>
+        </div>
+    </div>
 
     <div class="search-container">
         <div class="main-header-block">
@@ -95,13 +190,19 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="google-tabs">
-            <div class="tab-item active">Tümü</div>
+            <div class="tab-item active" data-category="general" onclick="switchCategory('general')">Tümü</div>
+            <div class="tab-item" data-category="images" onclick="switchCategory('images')">Görseller</div>
+            <div class="tab-item" data-category="news" onclick="switchCategory('news')">Haberler</div>
+            <div class="tab-item" onclick="openAI()">AI</div>
         </div>
     </div>
 
     <div id="results"></div>
+    <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
+        <button class="load-more-btn" id="loadMoreBtn" onclick="loadMoreResults()">Diğer sonuçları göster</button>
+    </div>
 
     <footer>
         <div class="footer-left">
@@ -110,6 +211,59 @@
     </footer>
 
     <script>
+        let currentCategory = 'general';
+        let currentLang = 'all';
+        let currentPage = 1;
+        let currentQuery = '';
+
+        function toggleSettingsPanel() {
+            document.getElementById('settingsPanel').classList.toggle('open');
+        }
+        document.addEventListener('click', function(e) {
+            const panel = document.getElementById('settingsPanel');
+            const trigger = document.getElementById('settingsTrigger');
+            if (panel.classList.contains('open') && !panel.contains(e.target) && e.target !== trigger) {
+                panel.classList.remove('open');
+            }
+        });
+
+        function toggleDarkMode(enabled) {
+            document.body.classList.toggle('dark-mode', enabled);
+            localStorage.setItem('jillex-dark-mode', enabled ? '1' : '0');
+        }
+        (function initDarkMode() {
+            const saved = localStorage.getItem('jillex-dark-mode');
+            const enabled = saved === '1' || (saved === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.getElementById('darkModeToggle').checked = enabled;
+            document.body.classList.toggle('dark-mode', enabled);
+        })();
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('jillex-lang', lang);
+            if (currentQuery) executeSearch(true);
+        }
+        (function initLanguage() {
+            const saved = localStorage.getItem('jillex-lang');
+            if (saved) {
+                currentLang = saved;
+                document.getElementById('langSelect').value = saved;
+            }
+        })();
+
+        function openAI() {
+            window.open('https://matylo.vercel.app', '_blank');
+        }
+
+        function switchCategory(category) {
+            if (category === currentCategory) return;
+            currentCategory = category;
+            document.querySelectorAll('.tab-item[data-category]').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.category === category);
+            });
+            if (currentQuery) executeSearch(true);
+        }
+
         document.getElementById('query').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') triggerSearchAction();
         });
@@ -119,7 +273,7 @@
             if (!query) return;
             const newUrl = `${window.location.origin}${window.location.pathname}?q=${encodeURIComponent(query)}`;
             window.history.pushState({ path: newUrl }, '', newUrl);
-            executeSearch();
+            executeSearch(true);
         }
 
         window.addEventListener('popstate', () => {
@@ -127,7 +281,7 @@
             const queryParam = urlParams.get('q');
             if (queryParam) {
                 document.getElementById('query').value = queryParam;
-                executeSearch();
+                executeSearch(true);
             } else { goHome(); }
         });
 
@@ -149,37 +303,97 @@
             resultsDiv.appendChild(card);
         }
 
-        async function executeSearch() {
-            const query = document.getElementById('query').value.trim();
+        function appendImageCard(title, url, imageSrc) {
             const resultsDiv = document.getElementById('results');
+            const a = document.createElement('a');
+            a.className = 'image-card';
+            a.href = url;
+            a.target = '_blank';
+            a.innerHTML = `
+                <img src="${imageSrc}" alt="${title}" loading="lazy" onerror="this.closest('.image-card').remove()">
+                <span>${title}</span>
+            `;
+            resultsDiv.appendChild(a);
+        }
 
+        function setResultsMode(category) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.className = category === 'images' ? 'images-mode' : '';
+            document.body.classList.toggle('images-active', category === 'images');
+        }
+
+        async function fetchResultsPage(query, category, lang, pageno) {
+            const url = `/api/search?q=${encodeURIComponent(query)}&category=${category}&lang=${lang}&pageno=${pageno}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Ana servis yanıt vermedi.");
+            return response.json();
+        }
+
+        function renderPage(data, category, append) {
+            const resultsDiv = document.getElementById('results');
+            if (!append) resultsDiv.innerHTML = '';
+
+            if (!Array.isArray(data) || data.length === 0) {
+                if (!append) resultsDiv.innerHTML = `<div class="status-msg">Sonuç bulunamadı. Lütfen farklı terimlerle arayın.</div>`;
+                document.getElementById('loadMoreWrap').style.display = 'none';
+                return;
+            }
+
+            data.forEach(item => {
+                if (!item.title || !item.url) return;
+                if (category === 'images' && item.image) {
+                    appendImageCard(item.title, item.url, item.image);
+                } else if (category !== 'images') {
+                    appendWebCard(item.title, item.url, item.snippet || "");
+                }
+            });
+
+            document.getElementById('loadMoreWrap').style.display = 'block';
+        }
+
+        async function executeSearch(resetPage) {
+            const query = document.getElementById('query').value.trim();
+            if (!query) return;
+            currentQuery = query;
+            if (resetPage) currentPage = 1;
+
+            const resultsDiv = document.getElementById('results');
             document.body.classList.add('results-mode');
+            setResultsMode(currentCategory);
+            document.getElementById('loadMoreWrap').style.display = 'none';
             resultsDiv.innerHTML = `<div class="status-msg">JILLEX sonuçları getiriyor...</div>`;
 
             try {
-                // Kendi sunucu tarafı endpoint'imizi çağırıyoruz (api/search.js).
-                // Bu, tarayıcıdan doğrudan üçüncü taraf arama servislerine gitmenin
-                // getirdiği CORS engelini ortadan kaldırır: fetch sunucuda yapılır,
-                // tarayıcıya sadece hazır JSON döner.
-                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-                if (!response.ok) throw new Error("Ana servis yanıt vermedi.");
-
-                const data = await response.json();
-                resultsDiv.innerHTML = '';
-
-                if (Array.isArray(data) && data.length > 0) {
-                    data.forEach(item => {
-                        if (item.title && item.url) {
-                            appendWebCard(item.title, item.url, item.snippet || "");
-                        }
-                    });
-                } else {
-                    resultsDiv.innerHTML = `<div class="status-msg">Sonuç bulunamadı. Lütfen farklı terimlerle arayın.</div>`;
-                }
-
+                const data = await fetchResultsPage(query, currentCategory, currentLang, currentPage);
+                renderPage(data, currentCategory, false);
             } catch (error) {
                 console.error("[JILLEX FALLBACK]", error);
-                await executeFallbackWikipedia(query, resultsDiv);
+                if (currentCategory === 'general') {
+                    await executeFallbackWikipedia(query, resultsDiv);
+                } else {
+                    resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">Bağlantı hatası oluştu.</div>`;
+                }
+            }
+        }
+
+        async function loadMoreResults() {
+            const btn = document.getElementById('loadMoreBtn');
+            btn.disabled = true;
+            btn.textContent = 'Yükleniyor...';
+            try {
+                currentPage += 1;
+                const data = await fetchResultsPage(currentQuery, currentCategory, currentLang, currentPage);
+                if (!data || data.length === 0) {
+                    btn.textContent = 'Başka sonuç yok';
+                    return;
+                }
+                renderPage(data, currentCategory, true);
+            } catch (e) {
+                console.error("[JILLEX LOAD MORE]", e);
+                currentPage -= 1;
+            } finally {
+                btn.disabled = false;
+                if (btn.textContent === 'Yükleniyor...') btn.textContent = 'Diğer sonuçları göster';
             }
         }
 
@@ -211,9 +425,16 @@
         }
 
         function goHome() {
-            document.body.classList.remove('results-mode');
+            document.body.classList.remove('results-mode', 'images-active');
             document.getElementById('query').value = '';
             document.getElementById('results').innerHTML = '';
+            document.getElementById('loadMoreWrap').style.display = 'none';
+            currentCategory = 'general';
+            currentPage = 1;
+            currentQuery = '';
+            document.querySelectorAll('.tab-item[data-category]').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.category === 'general');
+            });
             const homeUrl = `${window.location.origin}${window.location.pathname}`;
             window.history.pushState({ path: homeUrl }, '', homeUrl);
         }
@@ -221,7 +442,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('q')) {
             document.getElementById('query').value = urlParams.get('q');
-            executeSearch();
+            executeSearch(true);
         }
     </script>
 </body>
