@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JILLEX</title>
+    <title>JILLEX - FİND</title>
     <style>
         :root {
             --bg-color: #ffffff;
@@ -200,8 +200,8 @@
             const format = 'json';
             const categories = currentCategory === 'images' ? 'images' : 'general';
             
-            // CORS Politikası daha esnek olan açık ve kurumsal SearXNG node'u
-            const primaryApiUrl = `https://search.disclosure.is/search?q=${encodeURIComponent(query)}&format=${format}&categories=${categories}&language=${targetLanguage}`;
+            // Güncel, aktif ve CORS politikası açık genel SearXNG adresi
+            const primaryApiUrl = `https://searx.net.ua/search?q=${encodeURIComponent(query)}&format=${format}&categories=${categories}&language=${targetLanguage}`;
 
             try {
                 console.log(`[JILLEX FETCH] İstek atılıyor: ${primaryApiUrl}`);
@@ -211,10 +211,11 @@
                 });
 
                 console.log(`[JILLEX STATUS] HTTP Yanıt Kodu: ${response.status}`);
-                
                 if (!response.ok) throw new Error(`HTTP Hata Kodu: ${response.status}`);
 
                 const data = await response.json();
+                
+                // Arayüzü temizle
                 resultsDiv.innerHTML = '';
 
                 if (!data.results || data.results.length === 0) {
@@ -257,7 +258,7 @@
             }
         }
 
-        // Kırılmaz Açık API Yedek Motoru (Veriyi tam eşleyen güvenli fonksiyon)
+        // Kırılmaz Açık API Yedek Motoru (DOM temizleme senkronizasyonu düzeltilmiş hali)
         async function executeFallbackWikipedia(query, resultsDiv, dict) {
             try {
                 const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=opensearch&format=json&origin=*&search=${encodeURIComponent(query)}`;
@@ -265,11 +266,11 @@
                 
                 const res = await fetch(wikiUrl);
                 const wikiData = await res.json();
-                console.log("[JILLEX WIKI DATA] Gelen veri dizisi:", wikiData);
+                console.log("[JILLEX WIKI DATA] Gelen veri yapısı:", wikiData);
 
+                // Ekrana basmadan hemen önce yükleniyor yazısını güvenle temizliyoruz
                 resultsDiv.innerHTML = '';
 
-                // Wikipedia OpenSearch Yapısı: [Sorgu, Başlıklar[], Açıklamalar[], Linkler[]]
                 const titles = wikiData[1] || [];
                 const descriptions = wikiData[2] || [];
                 const links = wikiData[3] || [];
@@ -279,13 +280,15 @@
                     return;
                 }
 
+                // Senkron olarak DOM elementlerini ekle
                 for (let i = 0; i < titles.length; i++) {
                     if (titles[i] && links[i]) {
                         appendWebCard(titles[i], links[i], descriptions[i] || `${titles[i]} hakkında detaylı bilgi.`);
                     }
                 }
+                console.log(`[JILLEX WIKI RENDER] ${titles.length} adet sonuç ekrana başarıyla basıldı.`);
             } catch (wikiError) {
-                console.error("[JILLEX FATAL] Tüm sistemler engellendi!", wikiError);
+                console.error("[JILLEX FATAL] Tüm yedek sistemler de engellendi!", wikiError);
                 resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">${dict.fail}</div>`;
             }
         }
