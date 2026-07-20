@@ -139,8 +139,8 @@
         let currentPage = 1;
 
         const languages = {
-            'tr-TR': { search: "Ara", all: "Tümü", img: "Görseller", lang: "Dil", ph: "İnternette arama yapın...", copy: "© Wind Developers", loading: "JILLEX sonuçları getiriyor...", noRes: "Sonuç bulunamadı.", fail: "Arama motoru bağlantısı yenileniyor, lütfen tekrar deneyin.", more: "Diğer Sonuçlar" },
-            'en-US': { search: "Search", all: "All", img: "Images", lang: "Language", ph: "Search the web...", copy: "© Wind Developers", loading: "JILLEX fetching results...", noRes: "No results found.", fail: "Connection reset, please try again.", more: "More Results" }
+            'tr-TR': { search: "Ara", all: "Tümü", img: "Görseller", lang: "Dil", ph: "İnternette arama yapın...", copy: "© Wind Developers", loading: "JILLEX sonuçları getiriyor...", noRes: "Sonuç bulunamadı.", fail: "Bağlantı hatası oluştu.", more: "Diğer Sonuçlar" },
+            'en-US': { search: "Search", all: "All", img: "Images", lang: "Language", ph: "Search the web...", copy: "© Wind Developers", loading: "JILLEX fetching results...", noRes: "No results found.", fail: "Connection error.", more: "More Results" }
         };
 
         function updateInterfaceLanguage() {
@@ -182,6 +182,80 @@
             } else { goHome(); }
         });
 
+        // JSONP Yapısı İçin Küresel Callback Fonksiyonu (Tarayıcı bot engelini böyle aşar)
+        window.processJillexResults = function(data) {
+            const resultsDiv = document.getElementById('results');
+            const selectedLanguage = document.getElementById('countrySelect').value;
+            const dict = languages[selectedLanguage] || languages['tr-TR'];
+
+            if (currentPage === 1) resultsDiv.innerHTML = '';
+
+            const finalResults = [];
+
+            if (currentCategory === 'images') {
+                let imgGrid = resultsDiv.querySelector('.image-results');
+                if (!imgGrid) {
+                    imgGrid = document.createElement('div');
+                    imgGrid.className = 'image-results';
+                    resultsDiv.appendChild(imgGrid);
+                }
+
+                if (data.RelatedTopics) {
+                    data.RelatedTopics.forEach(topic => {
+                        if (topic.Icon && topic.Icon.URL) {
+                            const fullImg = topic.Icon.URL.startsWith('http') ? topic.Icon.URL : `https://duckduckgo.com${topic.Icon.URL}`;
+                            const card = document.createElement('div');
+                            card.className = 'image-card';
+                            card.innerHTML = `
+                                <a href="${topic.FirstURL || fullImg}" target="_blank"><img src="${fullImg}" onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300&q=80'"></a>
+                                <span>${topic.Text || "Visual"}</span>
+                            `;
+                            imgGrid.appendChild(card);
+                            finalResults.push(topic);
+                        }
+                    });
+                }
+            } else {
+                // Kurumsal Web Sonuçları İşleme
+                if (data.Heading && data.AbstractURL) {
+                    appendWebCard(data.Heading, data.AbstractURL, data.Abstract || `${data.Heading} hakkında web kaynakları.`);
+                    finalResults.push(data.Heading);
+                }
+
+                if (data.RelatedTopics) {
+                    data.RelatedTopics.forEach(topic => {
+                        if (topic.FirstURL && topic.Text && !topic.Result) {
+                            const splitText = topic.Text.split(' - ');
+                            appendWebCard(splitText[0] || "Web Sayfası", topic.FirstURL, splitText[1] || topic.Text);
+                            finalResults.push(topic);
+                        }
+                    });
+                }
+            }
+
+            if (finalResults.length === 0 && currentPage === 1) {
+                resultsDiv.innerHTML = `<div class="status-msg">${dict.noRes}</div>`;
+            }
+        };
+
+        function appendWebCard(title, url, content) {
+            const resultsDiv = document.getElementById('results');
+            let domain = "link";
+            try { domain = new URL(url).hostname; } catch(e){}
+
+            const card = document.createElement('div');
+            card.className = 'result-card';
+            card.innerHTML = `
+                <div class="result-header">
+                    <img src="https://www.google.com/s2/favicons?sz=64&domain=${domain}" class="result-logo" onerror="this.src='https://www.google.com/s2/favicons?sz=64&domain=example.com'">
+                    <cite>${url}</cite>
+                </div>
+                <a href="${url}" target="_blank">${title}</a>
+                <p>${content}</p>
+            `;
+            resultsDiv.appendChild(card);
+        }
+
         async function executeSearch(isLoadMore = false) {
             const query = document.getElementById('query').value.trim();
             const resultsDiv = document.getElementById('results');
@@ -194,54 +268,19 @@
                 resultsDiv.innerHTML = `<div class="status-msg">${dict.loading}</div>`;
             }
 
-            let apiEndpoint = `/api/search?q=${encodeURIComponent(query)}&category=${currentCategory}&page=${currentPage}`;
+            // TARAYICI DÜZEYİNDE DUCKDUCKGO JSONP KÖPRÜSÜ (CORS ve Bot Koruması Yemez!)
+            const oldScript = document.getElementById('jillex-jsonp-script');
+            if (oldScript) oldScript.remove();
 
-            try {
-                const response = await fetch(apiEndpoint);
-                if (!response.ok) throw new Error();
-                const data = await response.json();
-                
-                if (!isLoadMore) resultsDiv.innerHTML = '';
-
-                if (!data.results || data.results.length === 0) {
-                    if(!isLoadMore) resultsDiv.innerHTML = `<div class="status-msg">${dict.noRes}</div>`;
-                    return;
-                }
-
-                if (currentCategory === 'images') {
-                    let imgGrid = resultsDiv.querySelector('.image-results');
-                    if (!imgGrid) {
-                        imgGrid = document.createElement('div');
-                        imgGrid.className = 'image-results';
-                        resultsDiv.appendChild(imgGrid);
-                    }
-                    data.results.forEach(item => {
-                        const card = document.createElement('div');
-                        card.className = 'image-card';
-                        card.innerHTML = `
-                            <a href="${item.url}" target="_blank"><img src="${item.img_src}" onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300&q=80'"></a>
-                            <span>${item.title}</span>
-                        `;
-                        imgGrid.appendChild(card);
-                    });
-                } else {
-                    data.results.forEach(item => {
-                        const card = document.createElement('div');
-                        card.className = 'result-card';
-                        card.innerHTML = `
-                            <div class="result-header">
-                                <img src="${item.logo}" class="result-logo" onerror="this.src='https://www.google.com/s2/favicons?sz=64&domain=example.com'">
-                                <cite>${item.url}</cite>
-                            </div>
-                            <a href="${item.url}" target="_blank">${item.title}</a>
-                            <p>${item.content}</p>
-                        `;
-                        resultsDiv.appendChild(card);
-                    });
-                }
-            } catch (error) {
+            const script = document.createElement('script');
+            script.id = 'jillex-jsonp-script';
+            script.src = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&callback=processJillexResults&no_html=1&skip_disambig=1`;
+            
+            script.onerror = function() {
                 if(!isLoadMore) resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">${dict.fail}</div>`;
-            }
+            };
+
+            document.body.appendChild(script);
         }
 
         function loadNextPage() {
