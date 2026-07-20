@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FIND</title>
+    <title>JILLEX</title>
     <style>
         :root {
             --bg-color: #ffffff;
@@ -118,6 +118,14 @@
     </footer>
 
     <script>
+        // Sürekli değişen proxy havuzu (AllOrigins çökerse diğerleri devreye girer)
+        const proxyPool = [
+            (url) => `https://api.codetabs.com/v1/proxy?url=${encodeURIComponent(url)}`,
+            (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+            (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+            (url) => `https://win-cors-proxy.vercel.app/api/proxy?url=${encodeURIComponent(url)}`
+        ];
+
         document.getElementById('query').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') triggerSearchAction();
         });
@@ -162,54 +170,69 @@
             const resultsDiv = document.getElementById('results');
 
             document.body.classList.add('results-mode');
-            resultsDiv.innerHTML = `<div class="status-msg">JILLEX web sonuçlarını getiriyor...</div>`;
+            resultsDiv.innerHTML = `<div class="status-msg">JILLEX güvenli kanallardan veri çekiyor...</div>`;
 
-            // DuckDuckGo HTML sürümünü CORS proxy üzerinden çekiyoruz (Üyelik veya kota sınırı yoktur)
             const targetUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+            let success = false;
 
-            try {
-                const response = await fetch(proxyUrl);
-                if (!response.ok) throw new Error("Ağ yanıtı başarısız.");
-                
-                const htmlText = await response.text();
-                
-                // HTML metnini tarayıcının anlayacağı bir DOM ağacına dönüştürüyoruz
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(htmlText, "text/html");
-                
-                // DuckDuckGo HTML kartlarını yakalıyoruz
-                const searchResults = doc.querySelectorAll('.links_main');
-                resultsDiv.innerHTML = ''; // Yükleniyor yazısını temizle
+            // Havuzdaki proxy'leri sırayla deniyoruz
+            for (let i = 0; i < proxyPool.length; i++) {
+                const proxyUrl = proxyPool[i](targetUrl);
+                console.log(`[JILLEX TRY] Proxy ${i + 1} deneniyor: ${proxyUrl}`);
 
-                if (searchResults.length === 0) {
-                    console.log("[JILLEX INFO] Web sonucu bulunamadı, Wikipedia yedek mekanizması çağrılıyor...");
-                    await executeFallbackWikipedia(query, resultsDiv);
-                    return;
-                }
+                try {
+                    // 6 saniyelik bir zaman aşımı (Timeout) sınırı koyuyoruz ki yanıt vermeyen proxy'de takılı kalmasın
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-                searchResults.forEach(result => {
-                    const titleElement = result.querySelector('.result__a');
-                    const snippetElement = result.nextElementSibling && result.nextElementSibling.classList.contains('result__snippet') 
-                        ? result.nextElementSibling 
-                        : null;
+                    const response = await fetch(proxyUrl, { signal: controller.signal });
+                    clearTimeout(timeoutId);
 
-                    if (titleElement) {
-                        const title = titleElement.innerText;
-                        let rawUrl = titleElement.getAttribute('href');
+                    if (!response.ok) throw new Error(`HTTP Hata: ${response.status}`);
+                    
+                    const htmlText = await response.text();
+                    
+                    // Eğer dönen yanıt boş veya bariz hata sayfasıysa sonraki proxy'ye geç
+                    if (!htmlText || htmlText.length < 500) throw new Error("Yetersiz veya hatalı veri.");
+
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlText, "text/html");
+                    const searchResults = doc.querySelectorAll('.links_main');
+
+                    if (searchResults.length > 0) {
+                        resultsDiv.innerHTML = ''; // Yükleniyor yazısını sil
                         
-                        // DuckDuckGo bazen yönlendirme linki verir, onu temizleyip saf URL yapıyoruz
-                        if (rawUrl.includes('uddg=')) {
-                            rawUrl = decodeURIComponent(rawUrl.split('uddg=')[1].split('&')[0]);
-                        }
+                        searchResults.forEach(result => {
+                            const titleElement = result.querySelector('.result__a');
+                            const snippetElement = result.nextElementSibling && result.nextElementSibling.classList.contains('result__snippet') 
+                                ? result.nextElementSibling 
+                                : null;
 
-                        const snippet = snippetElement ? snippetElement.innerText : "Açıklama mevcut değil.";
-                        appendWebCard(title, rawUrl, snippet);
+                            if (titleElement) {
+                                const title = titleElement.innerText;
+                                let rawUrl = titleElement.getAttribute('href');
+                                
+                                if (rawUrl.includes('uddg=')) {
+                                    rawUrl = decodeURIComponent(rawUrl.split('uddg=')[1].split('&')[0]);
+                                }
+
+                                const snippet = snippetElement ? snippetElement.innerText : "Açıklama mevcut değil.";
+                                appendWebCard(title, rawUrl, snippet);
+                            }
+                        });
+
+                        success = true;
+                        console.log(`%c[JILLEX SUCCESS] Proxy ${i + 1} başarıyla çalıştı!`, "color: green; font-weight: bold;");
+                        break; // Sonuçlar başarıyla basıldıysa döngüden çık
                     }
-                });
+                } catch (error) {
+                    console.warn(`[JILLEX WARN] Proxy ${i + 1} başarısız oldu: ${error.message}`);
+                }
+            }
 
-            } catch (error) {
-                console.error("[JILLEX ERROR] Ana motor hatası, yedeğe geçiliyor:", error);
+            // Eğer havuzdaki tüm proxy'ler zaman aşımına uğrar veya çökerse Wikipedia yedek planı devreye girer
+            if (!success) {
+                console.log("[JILLEX FALLBACK] Ana havuz yanıt vermedi. Wikipedia moduna geçiliyor...");
                 await executeFallbackWikipedia(query, resultsDiv);
             }
         }
@@ -227,7 +250,7 @@
                 const links = wikiData[3] || [];
 
                 if (titles.length === 0) {
-                    resultsDiv.innerHTML = `<div class="status-msg">Hiçbir kaynakta sonuç bulunamadı.</div>`;
+                    resultsDiv.innerHTML = `<div class="status-msg">Hiçbir kanaldan veri alınamadı. Lütfen daha sonra tekrar deneyin.</div>`;
                     return;
                 }
 
@@ -237,7 +260,7 @@
                     }
                 }
             } catch (e) {
-                resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">Bağlantı hatası oluştu.</div>`;
+                resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">Bağlantı hatası oluştu. Sunucular yanıt vermiyor.</div>`;
             }
         }
 
