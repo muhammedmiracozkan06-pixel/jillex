@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JILLEX - Search</title>
+    <title>JILLEX</title>
     <style>
         :root {
             --bg-color: #ffffff;
@@ -127,8 +127,8 @@
         let currentCategory = 'general';
 
         const languages = {
-            'tr-TR': { search: "Ara", all: "Tümü", img: "Görseller", lang: "Dil", ph: "İnternette arama yapın...", copy: "© Wind Developers", loading: "JILLEX sonuçları getiriyor...", noRes: "Sonuç bulunamadı.", fail: "Bağlantı veya CORS hatası oluştu. Konsolu inceleyin." },
-            'en-US': { search: "Search", all: "All", img: "Images", lang: "Language", ph: "Search the web...", copy: "© Wind Developers", loading: "JILLEX fetching results...", noRes: "No results found.", fail: "Connection or CORS error. Check console." }
+            'tr-TR': { search: "Ara", all: "Tümü", img: "Görseller", lang: "Dil", ph: "İnternette arama yapın...", copy: "© Wind Developers", loading: "JILLEX sonuçları getiriyor...", noRes: "Sonuç bulunamadı.", fail: "Bağlantı hatası oluştu." },
+            'en-US': { search: "Search", all: "All", img: "Images", lang: "Language", ph: "Search the web...", copy: "© Wind Developers", loading: "JILLEX fetching results...", noRes: "No results found.", fail: "Connection error." }
         };
 
         function updateInterfaceLanguage() {
@@ -196,14 +196,12 @@
 
             console.log(`[JILLEX INFO] Arama sorgusu başlatıldı: "${query}", Kategori: "${currentCategory}"`);
 
-            // YENİ ALTYAPI: Kamusal ve Serbest Tasarımlı SearXNG API Altyapısı
-            // Büyük bot engellerine takılmayan alternatif genel düğüm havuzu
             const targetLanguage = selectedLanguage.split('-')[0];
             const format = 'json';
             const categories = currentCategory === 'images' ? 'images' : 'general';
             
-            // Eğer CORS sorunu çıkarsa doğrudan tarayıcıdan çalışan yedekli SearXNG havuzu
-            const primaryApiUrl = `https://searx.be/search?q=${encodeURIComponent(query)}&format=${format}&categories=${categories}&language=${targetLanguage}`;
+            // CORS Politikası daha esnek olan açık ve kurumsal SearXNG node'u
+            const primaryApiUrl = `https://search.disclosure.is/search?q=${encodeURIComponent(query)}&format=${format}&categories=${categories}&language=${targetLanguage}`;
 
             try {
                 console.log(`[JILLEX FETCH] İstek atılıyor: ${primaryApiUrl}`);
@@ -214,18 +212,13 @@
 
                 console.log(`[JILLEX STATUS] HTTP Yanıt Kodu: ${response.status}`);
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP Hata Kodu: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP Hata Kodu: ${response.status}`);
 
                 const data = await response.json();
-                console.log("[JILLEX DATA] Gelen veri ham hali:", data);
-
                 resultsDiv.innerHTML = '';
 
                 if (!data.results || data.results.length === 0) {
-                    console.warn("[JILLEX WARN] API bağlandı fakat sonuç dizisi boş döndü.");
-                    // FALLBACK: Eğer veri boş dönerse sistemi Wikipedia Açık Arama Motoruna yönlendiriyoruz
+                    console.warn("[JILLEX WARN] Birinci API boş veri döndü, yedeğe geçiliyor.");
                     await executeFallbackWikipedia(query, resultsDiv, dict);
                     return;
                 }
@@ -235,9 +228,9 @@
                     imgGrid.className = 'image-results';
                     resultsDiv.appendChild(imgGrid);
 
-                    data.results.forEach((item, index) => {
-                        if (item.img_src || item.thumbnail) {
-                            const imgSrc = item.img_src || item.thumbnail;
+                    data.results.forEach(item => {
+                        const imgSrc = item.img_src || item.thumbnail;
+                        if (imgSrc) {
                             const card = document.createElement('div');
                             card.className = 'image-card';
                             card.innerHTML = `
@@ -258,25 +251,25 @@
                 }
 
             } catch (error) {
-                console.error("[JILLEX ERROR] Bir şeyler ters gitti! Detaylı hata tanımı:", error);
-                // Birinci API patlarsa anında tamamen açık olan genel arama havuzunu devreye sok
-                console.log("[JILLEX FALLBACK] Birinci altyapı çöktü, Wikipedia Açık Havuzuna geçiliyor...");
+                console.error("[JILLEX ERROR] Birinci API hatası:", error);
+                console.log("[JILLEX FALLBACK] Wikipedia Açık Havuzuna geçiliyor...");
                 await executeFallbackWikipedia(query, resultsDiv, dict);
             }
         }
 
-        // Kırılmaz Açık API Yedek Motoru (CORS veya Ağ hatalarında devreye girer)
+        // Kırılmaz Açık API Yedek Motoru (Veriyi tam eşleyen güvenli fonksiyon)
         async function executeFallbackWikipedia(query, resultsDiv, dict) {
             try {
                 const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=opensearch&format=json&origin=*&search=${encodeURIComponent(query)}`;
-                console.log(`[JILLEX WIKI FETCH] Yedek sisteme istek atılıyor: ${wikiUrl}`);
+                console.log(`[JILLEX WIKI FETCH] İstek atılıyor: ${wikiUrl}`);
                 
                 const res = await fetch(wikiUrl);
                 const wikiData = await res.json();
-                console.log("[JILLEX WIKI DATA] Yedek sistemden gelen ham veri:", wikiData);
+                console.log("[JILLEX WIKI DATA] Gelen veri dizisi:", wikiData);
 
                 resultsDiv.innerHTML = '';
 
+                // Wikipedia OpenSearch Yapısı: [Sorgu, Başlıklar[], Açıklamalar[], Linkler[]]
                 const titles = wikiData[1] || [];
                 const descriptions = wikiData[2] || [];
                 const links = wikiData[3] || [];
@@ -286,11 +279,13 @@
                     return;
                 }
 
-                titles.forEach((title, index) => {
-                    appendWebCard(title, links[index], descriptions[index] || `${title} hakkında genel bilgiler.`);
-                });
+                for (let i = 0; i < titles.length; i++) {
+                    if (titles[i] && links[i]) {
+                        appendWebCard(titles[i], links[i], descriptions[i] || `${titles[i]} hakkında detaylı bilgi.`);
+                    }
+                }
             } catch (wikiError) {
-                console.error("[JILLEX FATAL] Tüm altyapılar çöktü!", wikiError);
+                console.error("[JILLEX FATAL] Tüm sistemler engellendi!", wikiError);
                 resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">${dict.fail}</div>`;
             }
         }
