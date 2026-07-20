@@ -1,92 +1,76 @@
-// api/search.js
+import fetch from 'node-fetch';
+
 export default async function handler(req, res) {
+    // CORS Başlıklarını Ayarla (Ön yüzün güvenle erişebilmesi için)
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
-    if (req.method === 'OPTIONS') return res.status(200).end();
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+    }
 
-    const { q, category } = req.query;
-    if (!q) return res.status(400).json({ error: "Missing query" });
+    const { q } = req.query;
+    if (!q) {
+        return res.status(400).json({ error: 'Sorgu parametresi (q) eksik.' });
+    }
 
     try {
-        // Tamamen ücretsiz, açık ve bot engelsiz Google CSE Element kimliği (Genel Web İçin)
-        // Bu kimlik tüm web üzerinde arama yapılmasına izin verir.
-        const cx = "partner-pub-2698861478625135:4561048473"; 
-        
-        let targetUrl = `https://cse.google.com/cse/element/v1?cx=${cx}&q=${encodeURIComponent(q)}&callback=googleCSECallback&hl=tr`;
-        
-        if (category === 'images') {
-            targetUrl += '&searchType=image';
-        }
-
+        const targetUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(q)}`;
         const response = await fetch(targetUrl, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Referer': 'https://cse.google.com/'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             }
         });
 
-        if (!response.ok) throw new Error("Google CSE Gateway Rejected");
-        
-        const rawText = await response.text();
-        
-        // Gelen veri JSONP (callback fonksiyonu içinde) olduğu için temiz JSON'a çeviriyoruz
-        const jsonString = rawText.replace(/^googleCSECallback\(/, '').replace(/\);$/, '');
-        const data = JSON.parse(jsonString);
+        if (!response.ok) {
+            throw new Error(`Arama motoru yanıt vermedi: ${response.status}`);
+        }
 
-        const finalResults = [];
+        const htmlText = await response.text();
+        const results = [];
 
-        if (category === 'images') {
-            if (data.results && data.results.length > 0) {
-                data.results.forEach(item => {
-                    if (item.imageUrl) {
-                        finalResults.push({
-                            title: item.title || "Google Visual",
-                            url: item.url || item.imageUrl,
-                            img_src: item.imageUrl
-                        });
-                    }
-                });
+        // Sunucu tarafında Regex ile HTML etiketlerini güvenli ve hızlıca ayıklıyoruz
+        const resultRegex = /<div class="[^"]*links_main[^"]*">[\s\S]*?<a class="result__a" href="([^"]+)">([\s\S]*?)<\/a>[\s\S]*?<span class="result__snippet">([\s\S]*?)<\/span>/g;
+        let match;
+
+        while ((match = resultRegex.exec(htmlText)) !== null) {
+            let rawUrl = match[1];
+            let title = match[2].replace(/<[^>]*>/g, '').trim();
+            let snippet = match[3].replace(/<[^>]*>/g, '').trim();
+
+            // DuckDuckGo yönlendirme linklerini temizleme
+            if (rawUrl.includes('uddg=')) {
+                rawUrl = decodeURIComponent(rawUrl.split('uddg=')[1].split('&')[0]);
             }
-        } else {
-            if (data.results && data.results.length > 0) {
-                data.results.forEach(item => {
-                    if (item.url && item.title) {
-                        let domain = "link";
-                        try { domain = new URL(item.url).hostname; } catch(e){}
 
-                        finalResults.push({
-                            title: item.title,
-                            url: item.url,
-                            content: item.snippet || "Daha fazla bilgi için siteyi ziyaret edin.",
-                            logo: `https://www.google.com/s2/favicons?sz=64&domain=${domain}`
-                        });
-                    }
+            results.push({ title, url: rawUrl, snippet });
+        }
+
+        // Eğer DuckDuckGo boş döndüyse Wikipedia yedek mekanizmasını sunucu tarafında çalıştır
+        if (results.length === 0) {
+            const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=opensearch&format=json&search=${encodeURIComponent(q)}`;
+            const wikiRes = await fetch(wikiUrl);
+            const wikiData = await wikiRes.json();
+            
+            const titles = wikiData[1] || [];
+            const descriptions = wikiData[2] || [];
+            const links = wikiData[3] || [];
+
+            for (let i = 0; i < titles.length; i++) {
+                results.push({
+                    title: titles[i],
+                    url: links[i],
+                    snippet: descriptions[i] || `${titles[i]} hakkında bilgi.`
                 });
             }
         }
 
-        return res.status(200).json({ results: finalResults.slice(0, 15) });
+        return res.status(200).json(results);
 
-    } catch (err) {
-        // Eğer bu da patlarsa sıfır riskli, lokal çalışan Wikipedia motoru (Asla 403 vermez)
-        try {
-            const fallbackUrl = `https://tr.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(q)}&limit=10&format=json`;
-            const fbRes = await fetch(fallbackUrl);
-            const fbData = await fbRes.json();
-            
-            const backupArray = (fbData[1] || []).map((title, i) => ({
-                title: title,
-                url: fbData[3][i],
-                content: fbData[2][i] || "Detaylar için tıklayın.",
-                logo: `https://www.google.com/s2/favicons?sz=64&domain=wikipedia.org`
-            }));
-            
-            return res.status(200).json({ results: backupArray });
-        } catch (e) {
-            return res.status(500).json({ error: "Fatal: All layers blocked.", details: err.message });
-        }
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
     }
 }
