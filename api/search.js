@@ -1,6 +1,6 @@
-// api/search.js
-// Vercel'in hata vermemesi için CommonJS (module.exports) yapısına geçtik
-module.exports = async (req, res) => {
+import * as cheerio from 'cheerio';
+
+export default async function handler(req, res) {
     // CORS Başlıkları
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,16 +14,15 @@ module.exports = async (req, res) => {
 
     const { q } = req.query;
     if (!q) {
-        return res.status(200).json([]); // Hata fırlatmak yerine boş dizi dönüyoruz (500'ü engellemek için)
+        return res.status(200).json([]);
     }
 
     try {
         const targetUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(q)}`;
         
-        // Node'un yerleşik fetch'i ile istek atıyoruz
         const response = await fetch(targetUrl, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
             }
         });
 
@@ -32,28 +31,31 @@ module.exports = async (req, res) => {
         if (response.ok) {
             const htmlText = await response.text();
             
-            // Regex eşleşmelerini daha güvenli bir try-catch bloğuna alıyoruz
-            try {
-                const resultRegex = /<div class="[^"]*links_main[^"]*">[\s\S]*?<a class="result__a" href="([^"]+)">([\s\S]*?)<\/a>[\s\S]*?<span class="result__snippet">([\s\S]*?)<\/span>/g;
-                let match;
+            // Cheerio ile HTML'i DOM ağacı gibi güvenle tarıyoruz
+            const $ = cheerio.load(htmlText);
+            
+            $('.links_main').each((i, element) => {
+                const titleElement = $(element).find('.result__a');
+                // Snippet bir sonraki kardeş elementte (result__snippet) yer alır
+                const snippetElement = $(element).next('.result__snippet');
 
-                while ((match = resultRegex.exec(htmlText)) !== null) {
-                    let rawUrl = match[1];
-                    let title = match[2].replace(/<[^>]*>/g, '').trim();
-                    let snippet = match[3].replace(/<[^>]*>/g, '').trim();
+                if (titleElement.length > 0) {
+                    const title = titleElement.text().trim();
+                    let rawUrl = titleElement.attr('href') || '';
+                    const snippet = snippetElement.length > 0 ? snippetElement.text().trim() : "Açıklama mevcut değil.";
 
                     if (rawUrl.includes('uddg=')) {
                         rawUrl = decodeURIComponent(rawUrl.split('uddg=')[1].split('&')[0]);
                     }
 
-                    results.push({ title, url: rawUrl, snippet });
+                    if (title && rawUrl) {
+                        results.push({ title, url: rawUrl, snippet });
+                    }
                 }
-            } catch (regexError) {
-                console.error("Regex Hatası:", regexError);
-            }
+            });
         }
 
-        // Eğer DuckDuckGo sunucumuzu engellediyse veya sonuç bulamadıysa doğrudan Wikipedia fallback devreye girsin
+        // Arama motoru boş dönerse Wikipedia yedek planı
         if (results.length === 0) {
             const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=opensearch&format=json&search=${encodeURIComponent(q)}`;
             const wikiRes = await fetch(wikiUrl);
@@ -74,12 +76,10 @@ module.exports = async (req, res) => {
             }
         }
 
-        // Ne olursa olsun 200 OK dönüyoruz, böylece frontend 500 hatası alıp kırılmıyor
         return res.status(200).json(results);
 
     } catch (error) {
-        console.error("Genel Sunucu Hatası:", error);
-        // Hata durumunda bile boş dizi dönerek frontend tarafını ayakta tutuyoruz
-        return res.status(200).json([]);
+        console.error("[JILLEX SERVER ERROR]:", error.message);
+        return res.status(200).json([]); // Hata anında bile 500 basma, boş dizi dön ki frontend çökmesin
     }
-};
+}
