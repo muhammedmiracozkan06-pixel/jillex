@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JILLEX</title>
+    <title>FIND</title>
     <style>
         :root {
             --bg-color: #ffffff;
@@ -25,6 +25,7 @@
             flex: 1; display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             padding: 20px; box-sizing: border-box;
+            transition: all 0.2s ease;
         }
         .logo-area h1 {
             font-size: 90px; font-weight: bold;
@@ -77,11 +78,6 @@
         .result-card a:hover { text-decoration: underline; }
         .result-card p { margin: 4px 0 0 0; font-size: 14px; color: #4d5156; line-height: 1.58; }
 
-        .image-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
-        .image-card { border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; background: #f8f9fa; position: relative; }
-        .image-card img { width: 100%; height: 120px; object-fit: cover; display: block; }
-        .image-card span { display: block; padding: 6px; font-size: 11px; color: #3c4043; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
         .status-msg { color: #70757a; font-style: normal; font-size: 14px; padding: 10px 0; }
 
         footer { background-color: var(--footer-bg); border-top: 1px solid #dadce0; padding: 12px 20px; font-size: 14px; color: var(--footer-text); display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
@@ -103,8 +99,7 @@
         </div>
         
         <div class="google-tabs">
-            <div class="tab-item active" id="tab-all" onclick="changeCategory('general', this)">Tümü</div>
-            <div class="tab-item" id="tab-img" onclick="changeCategory('images', this)">Görseller</div>
+            <div class="tab-item active" id="tab-all">Tümü</div>
         </div>
     </div>
 
@@ -112,60 +107,17 @@
 
     <footer>
         <div class="footer-left">
-            <span id="lblCopyright">© Wind Developers</span>
+            <span>© Wind Developers</span>
             <div>
-                <span id="lblLang">Dil</span>: 
-                <select id="countrySelect" onchange="updateInterfaceLanguage()">
+                <span>Dil</span>: 
+                <select id="countrySelect">
                     <option value="tr-TR">Türkçe</option>
-                    <option value="en-US">English</option>
                 </select>
             </div>
         </div>
     </footer>
 
     <script>
-        let currentCategory = 'general';
-
-        // Gelişmiş Açık CORS Proxy Sunucuları Havuzu
-        const corsProxies = [
-            (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-            (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-            (url) => `https://thingproxy.freeboard.io/fetch/${url}`,
-            (url) => `https://images~worker-bold-sun-2015.workers.dev/fetch?url=${encodeURIComponent(url)}`, // Worker tabanlı açık proxy mantığı
-            (url) => `https://proxy.cors.sh/${url}`, // Not: Bazen key ister ama fallback mekanizması sayesinde patlamaz, sonrakine geçer.
-            (url) => url // Doğrudan proxy'siz deneme seçeneği
-        ];
-
-        // Aktif SearXNG Node Havuzu (Farklı coğrafyalardan genel açık düğümler)
-        const searxNodes = [
-            "https://searx.net.ua",
-            "https://searx.be",
-            "https://opensearch.wtf",
-            "https://searx.priv.si",
-            "https://search.mdosch.de",
-            "https://searx.work"
-        ];
-
-        const languages = {
-            'tr-TR': { search: "Ara", all: "Tümü", img: "Görseller", lang: "Dil", ph: "İnternette arama yapın...", copy: "© Wind Developers", loading: "JILLEX sonuçları getiriyor...", noRes: "Sonuç bulunamadı.", fail: "Bağlantı hatası oluştu." },
-            'en-US': { search: "Search", all: "All", img: "Images", lang: "Language", ph: "Search the web...", copy: "© Wind Developers", loading: "JILLEX fetching results...", noRes: "No results found.", fail: "Connection error." }
-        };
-
-        function updateInterfaceLanguage() {
-            const langCode = document.getElementById('countrySelect').value;
-            const dict = languages[langCode] || languages['tr-TR'];
-            document.getElementById('searchBtn').innerText = dict.search;
-            document.getElementById('tab-all').innerText = dict.all;
-            document.getElementById('tab-img').innerText = dict.img;
-            document.getElementById('lblLang').innerText = dict.lang;
-            document.getElementById('query').placeholder = dict.ph;
-            document.getElementById('lblCopyright').innerText = dict.copy;
-
-            if (document.getElementById('query').value.trim() && document.body.classList.contains('results-mode')) {
-                executeSearch();
-            }
-        }
-
         document.getElementById('query').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') triggerSearchAction();
         });
@@ -208,97 +160,61 @@
         async function executeSearch() {
             const query = document.getElementById('query').value.trim();
             const resultsDiv = document.getElementById('results');
-            const selectedLanguage = document.getElementById('countrySelect').value;
-            const dict = languages[selectedLanguage] || languages['tr-TR'];
 
             document.body.classList.add('results-mode');
-            resultsDiv.innerHTML = `<div class="status-msg">${dict.loading}</div>`;
+            resultsDiv.innerHTML = `<div class="status-msg">JILLEX web sonuçlarını getiriyor...</div>`;
 
-            const targetLanguage = selectedLanguage.split('-')[0];
-            const categories = currentCategory === 'images' ? 'images' : 'general';
+            // DuckDuckGo HTML sürümünü CORS proxy üzerinden çekiyoruz (Üyelik veya kota sınırı yoktur)
+            const targetUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
 
-            // Kombinasyon Havuzunu Dinamik Olarak Matris Şeklinde Oluştur (6 Node x 6 Proxy = 36 olasılık)
-            let combinations = [];
-            for (let node of searxNodes) {
-                for (let proxyFn of corsProxies) {
-                    const rawUrl = `${node}/search?q=${encodeURIComponent(query)}&format=json&categories=${categories}&language=${targetLanguage}`;
-                    combinations.push({
-                        node: node,
-                        finalUrl: proxyFn(rawUrl)
-                    });
+            try {
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error("Ağ yanıtı başarısız.");
+                
+                const htmlText = await response.text();
+                
+                // HTML metnini tarayıcının anlayacağı bir DOM ağacına dönüştürüyoruz
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlText, "text/html");
+                
+                // DuckDuckGo HTML kartlarını yakalıyoruz
+                const searchResults = doc.querySelectorAll('.links_main');
+                resultsDiv.innerHTML = ''; // Yükleniyor yazısını temizle
+
+                if (searchResults.length === 0) {
+                    console.log("[JILLEX INFO] Web sonucu bulunamadı, Wikipedia yedek mekanizması çağrılıyor...");
+                    await executeFallbackWikipedia(query, resultsDiv);
+                    return;
                 }
-            }
 
-            let success = false;
+                searchResults.forEach(result => {
+                    const titleElement = result.querySelector('.result__a');
+                    const snippetElement = result.nextElementSibling && result.nextElementSibling.classList.contains('result__snippet') 
+                        ? result.nextElementSibling 
+                        : null;
 
-            // Sırayla tüm kombinasyonları dene (Birinden veri gelene kadar döngü akar)
-            for (let i = 0; i < combinations.length; i++) {
-                const currentTry = combinations[i];
-                console.log(`[JILLEX TRY ${i+1}/${combinations.length}] İstek atılıyor: ${currentTry.finalUrl}`);
-
-                try {
-                    const response = await fetch(currentTry.finalUrl, {
-                        method: 'GET',
-                        headers: { 'Accept': 'application/json' }
-                    });
-
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-                    const data = await response.json();
-                    
-                    // Verinin içi boş değilse ve arama sonuç dizisi mevcutsa kabul et
-                    if (data && data.results && data.results.length > 0) {
-                        console.log(`%c[JILLEX SUCCESS] Düğüm ve proxy kombinasyonu çalıştı! Kullanılan kaynak: ${currentTry.node}`, "color: green; font-weight: bold;");
+                    if (titleElement) {
+                        const title = titleElement.innerText;
+                        let rawUrl = titleElement.getAttribute('href');
                         
-                        resultsDiv.innerHTML = ''; // Ekranda yükleniyor yazısını temizle
-
-                        if (currentCategory === 'images') {
-                            const imgGrid = document.createElement('div');
-                            imgGrid.className = 'image-results';
-                            resultsDiv.appendChild(imgGrid);
-
-                            data.results.forEach(item => {
-                                const imgSrc = item.img_src || item.thumbnail;
-                                if (imgSrc) {
-                                    const card = document.createElement('div');
-                                    card.className = 'image-card';
-                                    card.innerHTML = `
-                                        <a href="${item.url || imgSrc}" target="_blank">
-                                            <img src="${imgSrc}" onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300&q=80'">
-                                        </a>
-                                        <span>${item.title || "Görsel"}</span>
-                                    `;
-                                    imgGrid.appendChild(card);
-                                }
-                            });
-                        } else {
-                            data.results.forEach(item => {
-                                if (item.title && item.url) {
-                                    appendWebCard(item.title, item.url, item.content || "Detaylar için web sitesini ziyaret edin.");
-                                }
-                            });
+                        // DuckDuckGo bazen yönlendirme linki verir, onu temizleyip saf URL yapıyoruz
+                        if (rawUrl.includes('uddg=')) {
+                            rawUrl = decodeURIComponent(rawUrl.split('uddg=')[1].split('&')[0]);
                         }
-                        
-                        success = true;
-                        break; // Başarılı sonucu aldık, döngüden çık!
-                    } else {
-                        console.warn(`[JILLEX WARN] İletişim kuruldu fakat veri boş döndü. Sıradakine geçiliyor...`);
+
+                        const snippet = snippetElement ? snippetElement.innerText : "Açıklama mevcut değil.";
+                        appendWebCard(title, rawUrl, snippet);
                     }
+                });
 
-                } catch (err) {
-                    console.error(`[JILLEX ERR] Kombinasyon ${i+1} başarısız oldu. Hata detayı:`, err.message);
-                    // Hata durumunda döngü hiçbir şey yapmadan bir sonraki i değerine geçecek (geçsin geçsin mantığı)
-                }
-            }
-
-            // Eğer havuzdaki 30+ kombinasyonun hiçbirinden veri dönmezse Wikipedia devreye girer
-            if (!success) {
-                console.log("[JILLEX FALLBACK] Tüm ana havuz kombinasyonları engellendi veya yanıt vermedi. Wikipedia Açık Havuzuna geçiliyor...");
-                await executeFallbackWikipedia(query, resultsDiv, dict);
+            } catch (error) {
+                console.error("[JILLEX ERROR] Ana motor hatası, yedeğe geçiliyor:", error);
+                await executeFallbackWikipedia(query, resultsDiv);
             }
         }
 
-        async function executeFallbackWikipedia(query, resultsDiv, dict) {
+        async function executeFallbackWikipedia(query, resultsDiv) {
             try {
                 const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=opensearch&format=json&origin=*&search=${encodeURIComponent(query)}`;
                 const res = await fetch(wikiUrl);
@@ -311,26 +227,18 @@
                 const links = wikiData[3] || [];
 
                 if (titles.length === 0) {
-                    resultsDiv.innerHTML = `<div class="status-msg">${dict.noRes}</div>`;
+                    resultsDiv.innerHTML = `<div class="status-msg">Hiçbir kaynakta sonuç bulunamadı.</div>`;
                     return;
                 }
 
                 for (let i = 0; i < titles.length; i++) {
                     if (titles[i] && links[i]) {
-                        appendWebCard(titles[i], links[i], descriptions[i] || `${titles[i]} hakkında detaylı bilgi.`);
+                        appendWebCard(titles[i], links[i], descriptions[i] || `${titles[i]} hakkında bilgi.`);
                     }
                 }
-            } catch (wikiError) {
-                console.error("[JILLEX FATAL] Bütün yedekler ve Wikipedia da başarısız!", wikiError);
-                resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">${dict.fail}</div>`;
+            } catch (e) {
+                resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">Bağlantı hatası oluştu.</div>`;
             }
-        }
-
-        function changeCategory(cat, element) {
-            currentCategory = cat;
-            document.querySelectorAll('.tab-item').forEach(item => item.classList.remove('active'));
-            element.classList.add('active');
-            if (document.getElementById('query').value.trim()) executeSearch();
         }
 
         function goHome() {
@@ -341,7 +249,6 @@
             window.history.pushState({ path: homeUrl }, '', homeUrl);
         }
 
-        updateInterfaceLanguage();
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('q')) {
             document.getElementById('query').value = urlParams.get('q');
