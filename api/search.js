@@ -1,3 +1,4 @@
+
 // api/search.js
 export default async function handler(req, res) {
     // CORS Başlıkları
@@ -6,7 +7,6 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
-    // Preflight istekleri için 200 OK dönüyoruz
     if (req.method === 'OPTIONS') {
         res.status(200).end();
         return;
@@ -17,6 +17,13 @@ export default async function handler(req, res) {
         return res.status(200).json([]);
     }
 
+    // category: general | images | news
+    const category = ['general', 'images', 'news'].includes(req.query.category) ? req.query.category : 'general';
+    // lang: SearXNG dil kodu, boş/all ise filtre uygulanmaz
+    const lang = (req.query.lang && req.query.lang !== 'all') ? req.query.lang : 'all';
+    // pageno: "diğer sonuçlar" (daha fazla yükle) butonu için sayfa numarası
+    const pageno = Math.max(1, parseInt(req.query.pageno, 10) || 1);
+
     // NOT: search.ctq.ro'nun kendi ürettiği tüm dahili linkler (Preferences, About, stats)
     // "/searxng" alt yolu ile başlıyor (ör. https://search.ctq.ro/searxng/preferences).
     // Yani instance'ın base_url'i kökte değil, /searxng altında yapılandırılmış.
@@ -24,29 +31,29 @@ export default async function handler(req, res) {
     const SEARX_BASES = ['https://search.ctq.ro/searxng', 'https://search.ctq.ro'];
     const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
 
+    const params = { q, category, lang, pageno };
+
     try {
         let results = [];
 
         for (const base of SEARX_BASES) {
-            // 1. Önce JSON formatını dene (instance destekliyorsa en temizi budur)
             try {
-                results = await fetchSearxJson(base, q, UA);
+                results = await fetchSearxJson(base, params, UA);
                 if (results.length > 0) break;
             } catch (e) {
                 console.warn(`[JILLEX] (${base}) SearXNG JSON başarısız:`, e.message);
             }
 
-            // 2. JSON boş/başarısız olduysa SearXNG'in normal HTML sayfasını kazı
             try {
-                results = await fetchSearxHtml(base, q, UA);
+                results = await fetchSearxHtml(base, params, UA);
                 if (results.length > 0) break;
             } catch (e) {
                 console.warn(`[JILLEX] (${base}) SearXNG HTML kazıma başarısız:`, e.message);
             }
         }
 
-        // 3. Hiçbir base çalışmadıysa, son çare olarak Wikipedia
-        if (results.length === 0) {
+        // Görsel/haber kategorilerinde Wikipedia anlamlı bir yedek değil, sadece genel aramada kullan
+        if (results.length === 0 && category === 'general' && pageno === 1) {
             await fetchWikipediaFallback(q, results);
         }
 
@@ -56,17 +63,30 @@ export default async function handler(req, res) {
         console.error("[JILLEX SERVER ERROR]:", error.message);
 
         const fallbackResults = [];
-        try {
-            await fetchWikipediaFallback(q, fallbackResults);
-        } catch (e) {}
+        if (category === 'general' && pageno === 1) {
+            try {
+                await fetchWikipediaFallback(q, fallbackResults);
+            } catch (e) {}
+        }
 
         return res.status(200).json(fallbackResults);
     }
 }
 
+function buildSearxUrl(base, params, extra) {
+    const usp = new URLSearchParams({
+        q: params.q,
+        pageno: String(params.pageno),
+        ...extra
+    });
+    if (params.category !== 'general') usp.set('categories', params.category);
+    if (params.lang !== 'all') usp.set('language', params.lang);
+    return `${base}/search?${usp.toString()}`;
+}
+
 // JSON API dener (format=json etkinse çalışır, çoğu public instance'ta kapalıdır)
-async function fetchSearxJson(base, q, userAgent) {
-    const targetUrl = `${base}/search?q=${encodeURIComponent(q)}&format=json`;
+async function fetchSearxJson(base, params, userAgent) {
+    const targetUrl = buildSearxUrl(base, params, { format: 'json' });
     const response = await fetch(targetUrl, { headers: { 'User-Agent': userAgent } });
     console.log(`[JILLEX] JSON dene: ${targetUrl} -> HTTP ${response.status}`);
 
@@ -76,7 +96,6 @@ async function fetchSearxJson(base, q, userAgent) {
 
     const contentType = response.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {
-        // Bazı instance'lar 200 dönüp aslında HTML sayfası gönderir (format desteklenmiyordur)
         throw new Error(`SearXNG JSON döndürmedi, content-type: ${contentType}`);
     }
 
@@ -84,13 +103,17 @@ async function fetchSearxJson(base, q, userAgent) {
     const results = [];
     if (data.results && Array.isArray(data.results)) {
         data.results.forEach(item => {
-            if (item.title && item.url) {
-                results.push({
-                    title: item.title,
-                    url: item.url,
-                    snippet: item.content || "Açıklama mevcut değil."
-                });
+            if (!item.title || !item.url) return;
+            const result = {
+                title: item.title,
+                url: item.url,
+                snippet: item.content || "Açıklama mevcut değil."
+            };
+            if (params.category === 'images') {
+                const img = item.img_src || item.thumbnail_src || item.thumbnail;
+                if (img) result.image = resolveUrl(img, base);
             }
+            results.push(result);
         });
     }
     return results;
@@ -98,8 +121,8 @@ async function fetchSearxJson(base, q, userAgent) {
 
 // SearXNG'in normal (HTML) arama sonuç sayfasını kazır.
 // JSON formatı kapalı olan instance'lar için güvenilir yedek yöntem.
-async function fetchSearxHtml(base, q, userAgent) {
-    const targetUrl = `${base}/search?q=${encodeURIComponent(q)}`;
+async function fetchSearxHtml(base, params, userAgent) {
+    const targetUrl = buildSearxUrl(base, params, {});
     const response = await fetch(targetUrl, {
         headers: {
             'User-Agent': userAgent,
@@ -115,27 +138,42 @@ async function fetchSearxHtml(base, q, userAgent) {
     const html = await response.text();
     const results = [];
 
-    // Her sonuç bir <article class="result ..."> bloğu içinde gelir.
+    // Her sonuç bir <article class="result ..."> bloğu içinde gelir (genel/haber/görsel hepsi için ortak).
     const articleRegex = /<article[^>]*class="result[^"]*"[\s\S]*?<\/article>/g;
     const articles = html.match(articleRegex) || [];
     console.log(`[JILLEX] HTML kazımada ${articles.length} <article class="result"> bloğu bulundu`);
 
     for (const block of articles) {
         const linkMatch = block.match(/<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/);
-        const snippetMatch = block.match(/<p[^>]*class="content[^"]*"[^>]*>([\s\S]*?)<\/p>/);
+        if (!linkMatch) continue;
 
-        if (linkMatch) {
-            const url = decodeHtmlEntities(linkMatch[1]);
+        const url = decodeHtmlEntities(linkMatch[1]);
+        if (!url || !url.startsWith('http')) continue;
+
+        if (params.category === 'images') {
+            // Görsel sonuçlarında <a> içeriği metin değil <img> etiketidir; başlığı img alt'ından al.
+            const imgMatch = block.match(/<img[^>]*src="([^"]+)"[^>]*(?:alt="([^"]*)")?/);
+            const altMatch = block.match(/alt="([^"]*)"/);
+            const title = stripHtml((altMatch && altMatch[1]) || (imgMatch && imgMatch[2]) || '') || 'Görsel';
+            const image = imgMatch ? resolveUrl(decodeHtmlEntities(imgMatch[1]), base) : null;
+            results.push({ title, url, snippet: '', image });
+        } else {
+            const snippetMatch = block.match(/<p[^>]*class="content[^"]*"[^>]*>([\s\S]*?)<\/p>/);
             const title = stripHtml(linkMatch[2]);
             const snippet = snippetMatch ? stripHtml(snippetMatch[1]) : "Açıklama mevcut değil.";
-
-            if (title && url && url.startsWith('http')) {
-                results.push({ title, url, snippet });
-            }
+            if (title) results.push({ title, url, snippet });
         }
     }
 
     return results;
+}
+
+function resolveUrl(maybeRelative, base) {
+    try {
+        return new URL(maybeRelative, base + '/').href;
+    } catch (e) {
+        return maybeRelative;
+    }
 }
 
 function stripHtml(str) {
@@ -152,7 +190,7 @@ function decodeHtmlEntities(str) {
         .replace(/&nbsp;/g, ' ');
 }
 
-// Ortak yedek arama fonksiyonu
+// Ortak yedek arama fonksiyonu (sadece genel kategori + ilk sayfa için kullanılır)
 async function fetchWikipediaFallback(query, arrayToPush) {
     const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=opensearch&format=json&search=${encodeURIComponent(query)}`;
     const wikiRes = await fetch(wikiUrl);
