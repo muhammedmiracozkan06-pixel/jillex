@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JILLEX</title>
+    <title>JILLEX - Search</title>
     <style>
         :root {
             --bg-color: #ffffff;
@@ -125,11 +125,10 @@
 
     <script>
         let currentCategory = 'general';
-        const cxToken = "partner-pub-2698861478625135:4561048473"; // Global Kırılmaz Arama Havuzu
 
         const languages = {
-            'tr-TR': { search: "Ara", all: "Tümü", img: "Görseller", lang: "Dil", ph: "İnternette arama yapın...", copy: "© Wind Developers", loading: "JILLEX sonuçları getiriyor...", noRes: "Sonuç bulunamadı.", fail: "Bağlantı hatası oluştu." },
-            'en-US': { search: "Search", all: "All", img: "Images", lang: "Language", ph: "Search the web...", copy: "© Wind Developers", loading: "JILLEX fetching results...", noRes: "No results found.", fail: "Connection error." }
+            'tr-TR': { search: "Ara", all: "Tümü", img: "Görseller", lang: "Dil", ph: "İnternette arama yapın...", copy: "© Wind Developers", loading: "JILLEX sonuçları getiriyor...", noRes: "Sonuç bulunamadı.", fail: "Bağlantı veya CORS hatası oluştu. Konsolu inceleyin." },
+            'en-US': { search: "Search", all: "All", img: "Images", lang: "Language", ph: "Search the web...", copy: "© Wind Developers", loading: "JILLEX fetching results...", noRes: "No results found.", fail: "Connection or CORS error. Check console." }
         };
 
         function updateInterfaceLanguage() {
@@ -168,60 +167,25 @@
             } else { goHome(); }
         });
 
-        // Google Güvenli Callback Mekanizması
-        window.googleCSECallback = function(data) {
+        function appendWebCard(title, url, content) {
             const resultsDiv = document.getElementById('results');
-            const selectedLanguage = document.getElementById('countrySelect').value;
-            const dict = languages[selectedLanguage] || languages['tr-TR'];
-            
-            resultsDiv.innerHTML = '';
+            let domain = "link";
+            try { domain = new URL(url).hostname; } catch(e){}
 
-            if (!data.results || data.results.length === 0) {
-                resultsDiv.innerHTML = `<div class="status-msg">${dict.noRes}</div>`;
-                return;
-            }
+            const card = document.createElement('div');
+            card.className = 'result-card';
+            card.innerHTML = `
+                <div class="result-header">
+                    <img src="https://www.google.com/s2/favicons?sz=64&domain=${domain}" class="result-logo" onerror="this.src='https://www.google.com/s2/favicons?sz=64&domain=example.com'">
+                    <cite>${url}</cite>
+                </div>
+                <a href="${url}" target="_blank">${title}</a>
+                <p>${content}</p>
+            `;
+            resultsDiv.appendChild(card);
+        }
 
-            if (currentCategory === 'images') {
-                const imgGrid = document.createElement('div');
-                imgGrid.className = 'image-results';
-                resultsDiv.appendChild(imgGrid);
-
-                data.results.forEach(item => {
-                    if (item.imageUrl) {
-                        const card = document.createElement('div');
-                        card.className = 'image-card';
-                        card.innerHTML = `
-                            <a href="${item.url || item.imageUrl}" target="_blank">
-                                <img src="${item.imageUrl}" onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300&q=80'">
-                            </a>
-                            <span>${item.title || "Visual"}</span>
-                        `;
-                        imgGrid.appendChild(card);
-                    }
-                });
-            } else {
-                data.results.forEach(item => {
-                    if (item.url && item.title) {
-                        let domain = "link";
-                        try { domain = new URL(item.url).hostname; } catch(e){}
-
-                        const card = document.createElement('div');
-                        card.className = 'result-card';
-                        card.innerHTML = `
-                            <div class="result-header">
-                                <img src="https://www.google.com/s2/favicons?sz=64&domain=${domain}" class="result-logo" onerror="this.src='https://www.google.com/s2/favicons?sz=64&domain=example.com'">
-                                <cite>${item.visibleUrl || item.url}</cite>
-                            </div>
-                            <a href="${item.url}" target="_blank">${item.title}</a>
-                            <p>${item.snippet || "Daha fazla bilgi için siteyi ziyaret edin."}</p>
-                        `;
-                        resultsDiv.appendChild(card);
-                    }
-                });
-            }
-        };
-
-        function executeSearch() {
+        async function executeSearch() {
             const query = document.getElementById('query').value.trim();
             const resultsDiv = document.getElementById('results');
             const selectedLanguage = document.getElementById('countrySelect').value;
@@ -230,24 +194,105 @@
             document.body.classList.add('results-mode');
             resultsDiv.innerHTML = `<div class="status-msg">${dict.loading}</div>`;
 
-            const oldScript = document.getElementById('jillex-google-script');
-            if (oldScript) oldScript.remove();
+            console.log(`[JILLEX INFO] Arama sorgusu başlatıldı: "${query}", Kategori: "${currentCategory}"`);
 
-            // DOĞRUDAN TARAYICIDAN GOOGLE HAFİF SORGULAMA TÜNELİ (Engellenemez JSONP)
-            const script = document.createElement('script');
-            script.id = 'jillex-google-script';
+            // YENİ ALTYAPI: Kamusal ve Serbest Tasarımlı SearXNG API Altyapısı
+            // Büyük bot engellerine takılmayan alternatif genel düğüm havuzu
+            const targetLanguage = selectedLanguage.split('-')[0];
+            const format = 'json';
+            const categories = currentCategory === 'images' ? 'images' : 'general';
             
-            let targetUrl = `https://cse.google.com/cse/element/v1?cx=${cxToken}&q=${encodeURIComponent(query)}&callback=googleCSECallback&hl=${selectedLanguage.split('-')[0]}`;
-            if (currentCategory === 'images') {
-                targetUrl += '&searchType=image';
+            // Eğer CORS sorunu çıkarsa doğrudan tarayıcıdan çalışan yedekli SearXNG havuzu
+            const primaryApiUrl = `https://searx.be/search?q=${encodeURIComponent(query)}&format=${format}&categories=${categories}&language=${targetLanguage}`;
+
+            try {
+                console.log(`[JILLEX FETCH] İstek atılıyor: ${primaryApiUrl}`);
+                const response = await fetch(primaryApiUrl, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                console.log(`[JILLEX STATUS] HTTP Yanıt Kodu: ${response.status}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP Hata Kodu: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("[JILLEX DATA] Gelen veri ham hali:", data);
+
+                resultsDiv.innerHTML = '';
+
+                if (!data.results || data.results.length === 0) {
+                    console.warn("[JILLEX WARN] API bağlandı fakat sonuç dizisi boş döndü.");
+                    // FALLBACK: Eğer veri boş dönerse sistemi Wikipedia Açık Arama Motoruna yönlendiriyoruz
+                    await executeFallbackWikipedia(query, resultsDiv, dict);
+                    return;
+                }
+
+                if (currentCategory === 'images') {
+                    const imgGrid = document.createElement('div');
+                    imgGrid.className = 'image-results';
+                    resultsDiv.appendChild(imgGrid);
+
+                    data.results.forEach((item, index) => {
+                        if (item.img_src || item.thumbnail) {
+                            const imgSrc = item.img_src || item.thumbnail;
+                            const card = document.createElement('div');
+                            card.className = 'image-card';
+                            card.innerHTML = `
+                                <a href="${item.url || imgSrc}" target="_blank">
+                                    <img src="${imgSrc}" onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300&q=80'">
+                                </a>
+                                <span>${item.title || "Görsel"}</span>
+                            `;
+                            imgGrid.appendChild(card);
+                        }
+                    });
+                } else {
+                    data.results.forEach(item => {
+                        if (item.title && item.url) {
+                            appendWebCard(item.title, item.url, item.content || "Detaylar için web sitesini ziyaret edin.");
+                        }
+                    });
+                }
+
+            } catch (error) {
+                console.error("[JILLEX ERROR] Bir şeyler ters gitti! Detaylı hata tanımı:", error);
+                // Birinci API patlarsa anında tamamen açık olan genel arama havuzunu devreye sok
+                console.log("[JILLEX FALLBACK] Birinci altyapı çöktü, Wikipedia Açık Havuzuna geçiliyor...");
+                await executeFallbackWikipedia(query, resultsDiv, dict);
             }
-            
-            script.src = targetUrl;
-            script.onerror = function() {
-                resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">${dict.fail}</div>`;
-            };
+        }
 
-            document.body.appendChild(script);
+        // Kırılmaz Açık API Yedek Motoru (CORS veya Ağ hatalarında devreye girer)
+        async function executeFallbackWikipedia(query, resultsDiv, dict) {
+            try {
+                const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=opensearch&format=json&origin=*&search=${encodeURIComponent(query)}`;
+                console.log(`[JILLEX WIKI FETCH] Yedek sisteme istek atılıyor: ${wikiUrl}`);
+                
+                const res = await fetch(wikiUrl);
+                const wikiData = await res.json();
+                console.log("[JILLEX WIKI DATA] Yedek sistemden gelen ham veri:", wikiData);
+
+                resultsDiv.innerHTML = '';
+
+                const titles = wikiData[1] || [];
+                const descriptions = wikiData[2] || [];
+                const links = wikiData[3] || [];
+
+                if (titles.length === 0) {
+                    resultsDiv.innerHTML = `<div class="status-msg">${dict.noRes}</div>`;
+                    return;
+                }
+
+                titles.forEach((title, index) => {
+                    appendWebCard(title, links[index], descriptions[index] || `${title} hakkında genel bilgiler.`);
+                });
+            } catch (wikiError) {
+                console.error("[JILLEX FATAL] Tüm altyapılar çöktü!", wikiError);
+                resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">${dict.fail}</div>`;
+            }
         }
 
         function changeCategory(cat, element) {
