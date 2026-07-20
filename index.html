@@ -22,10 +22,9 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            transition: all 0.2s ease;
         }
         
-        /* GİRİŞ EKRANI (Ana Görünüm) */
+        /* ANA EKRAN DÜZENİ */
         .search-container {
             flex: 1;
             display: flex;
@@ -34,7 +33,6 @@
             justify-content: center;
             padding: 20px;
             box-sizing: border-box;
-            transition: all 0.3s ease;
         }
         .logo-area h1 {
             font-size: 90px;
@@ -46,16 +44,14 @@
         }
         .search-wrapper {
             width: 100%;
-            max-width: 584px;
-            position: relative;
+            max-width: 584px; /* Google ile birebir genişlik */
         }
         .search-box-row {
             display: flex;
             border: 1px solid var(--border-color);
             border-radius: 24px;
-            padding: 5px 15px;
+            padding: 6px 18px;
             background: #fff;
-            box-shadow: none;
         }
         .search-box-row:hover, .search-box-row:focus-within {
             box-shadow: 0 1px 6px rgba(32,33,36,0.28);
@@ -68,7 +64,7 @@
             outline: none;
             color: var(--text-color);
             font-size: 16px;
-            padding: 10px;
+            padding: 10px 5px;
         }
         .search-box-row button {
             background: transparent;
@@ -80,7 +76,7 @@
             padding: 0 10px;
         }
 
-        /* SONUÇ EKRANI DÜZENİ (Google Tarzı) */
+        /* ARAMA YAPILDIĞINDAKİ DÜZEN */
         body.results-mode .search-container {
             justify-content: flex-start;
             align-items: flex-start;
@@ -99,7 +95,6 @@
             max-width: 800px;
         }
         
-        /* Google Tarzı Üst Sekmeler */
         .google-tabs {
             display: none;
             width: 100%;
@@ -122,7 +117,7 @@
             font-weight: 500;
         }
 
-        /* Sonuç Listeleme Alanı */
+        /* SONUÇLAR */
         #results {
             max-width: 652px;
             margin-left: 130px;
@@ -132,10 +127,7 @@
         }
         body:not(.results-mode) #results { display: none; }
 
-        /* Klasik Web Sonuçları */
-        .result-card {
-            margin-bottom: 28px;
-        }
+        .result-card { margin-bottom: 28px; }
         .result-card cite {
             font-size: 12px;
             color: #202124;
@@ -143,49 +135,18 @@
             display: block;
             margin-bottom: 4px;
         }
-        .result-card a {
-            color: #1a0dab;
-            text-decoration: none;
-            font-size: 20px;
-        }
+        .result-card a { color: #1a0dab; text-decoration: none; font-size: 20px; }
         .result-card a:hover { text-decoration: underline; }
-        .result-card p {
-            margin: 4px 0 0 0;
-            font-size: 14px;
-            color: #4d5156;
-            line-height: 1.58;
-        }
+        .result-card p { margin: 4px 0 0 0; font-size: 14px; color: #4d5156; line-height: 1.58; }
 
-        /* Görsel Sonuç Izgarası */
-        .image-results {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 16px;
-        }
-        .image-card {
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            overflow: hidden;
-            background: #f8f9fa;
-        }
-        .image-card img {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-        }
-        .image-card span {
-            display: block;
-            padding: 6px;
-            font-size: 11px;
-            color: #3c4043;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        .image-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+        .image-card { border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; background: #f8f9fa; }
+        .image-card img { width: 100%; height: 120px; object-fit: cover; }
+        .image-card span { display: block; padding: 6px; font-size: 11px; color: #3c4043; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .status-msg { color: #70757a; font-style: italic; }
 
-        /* MİNİMALİST FOOTER */
+        /* FOOTER */
         footer {
             background-color: var(--footer-bg);
             border-top: 1px solid #e4e4e4;
@@ -197,39 +158,25 @@
             align-items: center;
         }
         .footer-left { display: flex; align-items: center; gap: 20px; }
-        .engine-btn {
-            color: var(--primary-blue);
-            cursor: pointer;
-            font-weight: 500;
-        }
-        select {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--footer-text);
-            border-radius: 4px;
-            padding: 2px 6px;
-            outline: none;
-            cursor: pointer;
-        }
+        .engine-btn { color: var(--primary-blue); cursor: pointer; font-weight: 500; }
+        select { background: transparent; border: 1px solid var(--border-color); color: var(--footer-text); border-radius: 4px; padding: 2px 6px; outline: none; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <!-- Arama Bölümü -->
     <div class="search-container">
         <div class="main-header-block">
             <div class="logo-area">
-                <h1 id="jillexLogo">JILLEX</h1>
+                <h1 id="jillexLogo" style="cursor:pointer;" onclick="goHome()">JILLEX</h1>
             </div>
             <div class="search-wrapper">
                 <div class="search-box-row">
-                    <input type="text" id="query" placeholder="" autocomplete="off">
-                    <button onclick="searchJillex()" id="searchBtn">Ara</button>
+                    <input type="text" id="query" autocomplete="off">
+                    <button onclick="triggerSearchAction()" id="searchBtn">Ara</button>
                 </div>
             </div>
         </div>
         
-        <!-- Google Tarzı Arama Kategorileri -->
         <div class="google-tabs">
             <div class="tab-item active" id="tab-all" onclick="changeCategory('general', this)">Tümü</div>
             <div class="tab-item" id="tab-img" onclick="changeCategory('images', this)">Görseller</div>
@@ -238,13 +185,11 @@
         </div>
     </div>
 
-    <!-- Sonuçlar Bölümü -->
     <div id="results"></div>
 
-    <!-- En Sade Footer -->
     <footer>
         <div class="footer-left">
-            <span>© Wind Developers</span>
+            <span id="lblCopyright">© Wind Developers</span>
             <div>
                 <span id="lblLang">Dil</span>: 
                 <select id="countrySelect" onchange="updateInterfaceLanguage()">
@@ -266,28 +211,14 @@
         let currentEngine = 'SearXNG';
         let currentCategory = 'general';
 
-        // Dil Sözlüğü (Arayüz Elemanları İçin)
         const languages = {
-            'tr-TR': { search: "Ara", all: "Tümü", img: "Görseller", news: "Haberler", shop: "Alışveriş", lang: "Dil", engine: "Arama", ph: "İnternette arama yapın..." },
-            'en-US': { search: "Search", all: "All", img: "Images", news: "News", shop: "Shopping", lang: "Language", engine: "Search Engine", ph: "Search the web..." },
-            'de-DE': { search: "Suche", all: "Alle", img: "Bilder", news: "Nachrichten", shop: "Einkaufen", lang: "Sprache", engine: "Suchmaschine", ph: "Im Web suchen..." },
-            'fr-FR': { search: "Recherche", all: "Tout", img: "Images", news: "Actualités", shop: "Shopping", lang: "Langue", engine: "Moteur", ph: "Rechercher sur le web..." }
+            'tr-TR': { search: "Ara", all: "Tümü", img: "Görseller", news: "Haberler", shop: "Alışveriş", lang: "Dil", engine: "Arama", ph: "İnternette arama yapın...", copy: "© Wind Developers", loading: "JILLEX aranıyor...", noRes: "Sonuç bulunamadı.", fail: "Sunucu hatası oluştu.", thank: "Thank you" },
+            'en-US': { search: "Search", all: "All", img: "Images", news: "News", shop: "Shopping", lang: "Language", engine: "Search Engine", ph: "Search the web...", copy: "© Wind Developers", loading: "JILLEX searching...", noRes: "No results found.", fail: "Server connection failed.", thank: "Thank you" },
+            'de-DE': { search: "Suche", all: "Alle", img: "Bilder", news: "Nachrichten", shop: "Einkaufen", lang: "Sprache", engine: "Suchmaschine", ph: "Im Web suchen...", copy: "© Wind Developers", loading: "JILLEX sucht...", noRes: "Keine Ergebnisse gefunden.", fail: "Serverfehler aufgetreten.", thank: "Thank you" },
+            'fr-FR': { search: "Recherche", all: "Tout", img: "Images", news: "Actualités", shop: "Shopping", lang: "Langue", engine: "Moteur", ph: "Rechercher sur le web...", copy: "© Wind Developers", loading: "JILLEX recherche...", noRes: "Aucun résultat trouvé.", fail: "Échec de la connexion.", thank: "Thank you" }
         };
 
-        // Bağlantının kopmasını (Failed to fetch) önleyen kararlı genel proxy API adresleri
-        const engineUrls = {
-            'SearXNG': 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://searx.be/search'),
-            'Searx': 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://searx.space/search')
-        };
-
-        // İlk açılışta dili ayarla
-        updateInterfaceLanguage();
-
-        document.getElementById('query').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') searchJillex();
-        });
-
-        // Arayüz Dillerini Dinamik Güncelleme Fonksiyonu
+        // Dil yükleme fonksiyonu
         function updateInterfaceLanguage() {
             const langCode = document.getElementById('countrySelect').value;
             const dict = languages[langCode] || languages['tr-TR'];
@@ -300,98 +231,124 @@
             document.getElementById('lblLang').innerText = dict.lang;
             document.getElementById('lblEngine').innerText = dict.engine;
             document.getElementById('query').placeholder = dict.ph;
+            document.getElementById('lblCopyright').innerText = dict.copy;
 
-            // Arama yapılmışsa sonuçları yeni seçilen dile göre tazele
             if (document.getElementById('query').value.trim() && document.body.classList.contains('results-mode')) {
-                searchJillex();
+                executeSearch();
             }
         }
 
-        function toggleEngine() {
-            currentEngine = currentEngine === 'SearXNG' ? 'Searx' : 'SearXNG';
-            document.getElementById('engineToggle').innerText = currentEngine;
-            if (document.getElementById('query').value.trim()) searchJillex();
+        // Enter Algılama
+        document.getElementById('query').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') triggerSearchAction();
+        });
+
+        // URL Değiştirerek Arama Tetikleme (Google Tarzı)
+        function triggerSearchAction() {
+            const query = document.getElementById('query').value.trim();
+            if (!query) return;
+            // URL yapısını /search?q= veri şeklinde günceller
+            const newUrl = `${window.location.origin}${window.location.pathname}?q=${encodeURIComponent(query)}`;
+            window.history.pushState({ path: newUrl }, '', newUrl);
+            executeSearch();
         }
 
-        function changeCategory(cat, element) {
-            currentCategory = cat;
-            document.querySelectorAll('.tab-item').forEach(item => item.classList.remove('active'));
-            element.classList.add('active');
-            if (document.getElementById('query').value.trim()) searchJillex();
+        // Sayfa URL parametresini kontrol etme (Doğrudan linkle aramalar için)
+        window.addEventListener('popstate', checkUrlParams);
+        function checkUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryParam = urlParams.get('q');
+            if (queryParam) {
+                document.getElementById('query').value = queryParam;
+                executeSearch();
+            } else {
+                goHome();
+            }
         }
 
-        async function searchJillex() {
+        async function executeSearch() {
             const query = document.getElementById('query').value.trim();
             const resultsDiv = document.getElementById('results');
             const thanksContainer = document.getElementById('thanksContainer');
             const selectedLanguage = document.getElementById('countrySelect').value;
-            
-            if (!query) return;
+            const dict = languages[selectedLanguage] || languages['tr-TR'];
 
-            // Tasarımı Google Sonuç Ekranı Moduna Geçir
             document.body.classList.add('results-mode');
-            resultsDiv.innerHTML = '<div class="status-msg">JILLEX aranıyor...</div>';
+            resultsDiv.innerHTML = `<div class="status-msg">${dict.loading}</div>`;
 
-            // CORS engeline takılmayan allorigins yapısı üzerinden istek rotası
-            let baseProxyUrl = currentEngine === 'SearXNG' 
-                ? 'https://api.allorigins.win/get?url=' + encodeURIComponent(`https://searx.be/search?q=${encodeURIComponent(query)}&categories=${currentCategory}&language=${selectedLanguage}&format=json`)
-                : 'https://api.allorigins.win/get?url=' + encodeURIComponent(`https://searx.space/search?q=${encodeURIComponent(query)}&categories=${currentCategory}&language=${selectedLanguage}&format=json`);
+            // Güvenli istek rotası: Kendi Vercel Serverless fonksiyonumuza yönlendiriyoruz
+            let apiEndpoint = `/api/search?q=${encodeURIComponent(query)}&categories=${currentCategory}&language=${selectedLanguage}&engine=${currentEngine}`;
 
             try {
-                const response = await fetch(baseProxyUrl);
+                const response = await fetch(apiEndpoint);
                 if (!response.ok) throw new Error();
-                
-                const wrapperData = await response.json();
-                // Allorigins veriyi string olarak döner, JSON'a parse ediyoruz
-                const data = JSON.parse(wrapperData.contents);
+                const data = await response.json();
                 
                 resultsDiv.innerHTML = '';
-                thanksContainer.innerHTML = `Thank you <span style="font-weight:bold;">${currentEngine}</span>`;
+                thanksContainer.innerHTML = `${dict.thank} <span style="font-weight:bold;">${currentEngine}</span>`;
 
                 if (!data.results || data.results.length === 0) {
-                    resultsDiv.innerHTML = '<div class="status-msg">Sonuç bulunamadı.</div>';
+                    resultsDiv.innerHTML = `<div class="status-msg">${dict.noRes}</div>`;
                     return;
                 }
 
-                // GÖRSELLER MODU
                 if (currentCategory === 'images') {
                     const imgGrid = document.createElement('div');
                     imgGrid.className = 'image-results';
-                    
                     data.results.forEach(item => {
                         const imgUrl = item.img_src || item.thumbnail_src || item.url;
                         if (imgUrl && imgUrl.startsWith('http')) {
                             const card = document.createElement('div');
                             card.className = 'image-card';
                             card.innerHTML = `
-                                <a href="${item.url}" target="_blank">
-                                    <img src="${imgUrl}" onerror="this.src='https://placehold.co/150x120/f8f9fa/1a73e8?text=Image'">
-                                </a>
+                                <a href="${item.url}" target="_blank"><img src="${imgUrl}" onerror="this.src='https://placehold.co/150x120/f8f9fa/1a73e8?text=Image'"></a>
                                 <span>${item.title || 'Image'}</span>
                             `;
                             imgGrid.appendChild(card);
                         }
                     });
                     resultsDiv.appendChild(imgGrid);
-                } 
-                // KLASİK METİN SONUÇLARI (Tümü, Haberler, Alışveriş)
-                else {
+                } else {
                     data.results.slice(0, 15).forEach(item => {
                         const card = document.createElement('div');
                         card.className = 'result-card';
                         card.innerHTML = `
-                            <cite>${item.url.substring(0, 60)}</cite>
+                            <cite>${item.url.substring(0, 70)}</cite>
                             <a href="${item.url}" target="_blank">${item.title}</a>
                             <p>${item.content || ''}</p>
                         `;
                         resultsDiv.appendChild(card);
                     });
                 }
-
             } catch (error) {
-                resultsDiv.innerHTML = '<div class="status-msg" style="color:#d93025;">Sunucu havuzundan yanıt alınamadı. Lütfen alt kısımdan arama motorunu değiştirip tekrar deneyin.</div>';
+                resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">${dict.fail}</div>`;
             }
         }
+
+        function toggleEngine() {
+            currentEngine = currentEngine === 'SearXNG' ? 'Searx' : 'SearXNG';
+            document.getElementById('engineToggle').innerText = currentEngine;
+            if (document.getElementById('query').value.trim()) executeSearch();
+        }
+
+        function changeCategory(cat, element) {
+            currentCategory = cat;
+            document.querySelectorAll('.tab-item').forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+            if (document.getElementById('query').value.trim()) executeSearch();
+        }
+
+        function goHome() {
+            document.body.classList.remove('results-mode');
+            document.getElementById('query').value = '';
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('thanksContainer').innerHTML = '';
+            const homeUrl = `${window.location.origin}${window.location.pathname}`;
+            window.history.pushState({ path: homeUrl }, '', homeUrl);
+        }
+
+        // Sayfa ilk yüklendiğinde linkte arama parametresi var mı kontrol et
+        checkUrlParams();
     </script>
 </body>
 </html>
