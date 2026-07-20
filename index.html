@@ -10,81 +10,56 @@
             --text-color: #202124;
             --primary-blue: #1a73e8;
             --border-color: #dadce0;
-            --footer-bg: #f2f2f2;
+            --footer-bg: #f8f9fa;
             --footer-text: #70757a;
         }
         body {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             background-color: var(--bg-color);
             color: var(--text-color);
             font-family: Roboto, arial, sans-serif;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
         }
         .search-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            box-sizing: border-box;
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 20px; box-sizing: border-box;
         }
         .logo-area h1 {
-            font-size: 90px;
-            font-weight: bold;
-            color: var(--primary-blue);
-            margin: 0 0 30px 0;
-            letter-spacing: -4px;
-            user-select: none;
+            font-size: 90px; font-weight: bold;
+            color: var(--primary-blue); margin: 0 0 30px 0;
+            letter-spacing: -4px; user-select: none;
         }
         .search-wrapper { width: 100%; max-width: 584px; }
         .search-box-row {
-            display: flex;
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 6px 18px;
-            background: #fff;
+            display: flex; border: 1px solid var(--border-color);
+            border-radius: 24px; padding: 6px 18px; background: #fff;
         }
         .search-box-row:hover, .search-box-row:focus-within {
             box-shadow: 0 1px 6px rgba(32,33,36,0.28);
             border-color: rgba(223,225,229,0);
         }
         .search-box-row input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            outline: none;
-            color: var(--text-color);
-            font-size: 16px;
-            padding: 10px 5px;
+            flex: 1; background: transparent; border: none;
+            outline: none; color: var(--text-color);
+            font-size: 16px; padding: 10px 5px;
         }
         .search-box-row button {
-            background: transparent;
-            border: none;
-            color: var(--primary-blue);
-            font-weight: bold;
-            font-size: 15px;
-            cursor: pointer;
-            padding: 0 10px;
+            background: transparent; border: none;
+            color: var(--primary-blue); font-weight: bold;
+            font-size: 15px; cursor: pointer; padding: 0 10px;
         }
         body.results-mode .search-container {
-            justify-content: flex-start;
-            align-items: flex-start;
-            padding: 20px 20px 0 20px;
-            flex: 0 0 auto;
+            justify-content: flex-start; align-items: flex-start;
+            padding: 20px 20px 0 20px; flex: 0 0 auto;
         }
         body.results-mode .logo-area h1 { font-size: 32px; margin: 0 20px 0 0; letter-spacing: -1px; }
         body.results-mode .main-header-block { display: flex; align-items: center; width: 100%; max-width: 800px; }
         
         .google-tabs {
-            display: none;
-            width: 100%;
-            max-width: 650px;
-            margin-left: 110px;
-            border-bottom: 1px solid var(--border-color);
+            display: none; width: 100%; max-width: 650px;
+            margin-left: 110px; border-bottom: 1px solid var(--border-color);
             margin-top: 15px;
         }
         body.results-mode .google-tabs { display: flex; gap: 20px; }
@@ -94,11 +69,10 @@
         #results { max-width: 652px; margin-left: 130px; padding: 20px; box-sizing: border-box; flex: 1; }
         body:not(.results-mode) #results { display: none; }
 
-        /* Sitelerin Logolu Kart Tasarımı */
         .result-card { margin-bottom: 28px; }
         .result-header { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
         .result-logo { width: 18px; height: 18px; border-radius: 4px; object-fit: contain; background: #f1f3f4; }
-        .result-card cite { font-size: 12px; color: #202124; font-style: normal; }
+        .result-card cite { font-size: 12px; color: #202124; font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 500px; }
         .result-card a { color: #1a0dab; text-decoration: none; font-size: 20px; display: block; margin-top: 2px; }
         .result-card a:hover { text-decoration: underline; }
         .result-card p { margin: 4px 0 0 0; font-size: 14px; color: #4d5156; line-height: 1.58; }
@@ -108,28 +82,19 @@
         .image-card img { width: 100%; height: 120px; object-fit: cover; }
         .image-card span { display: block; padding: 6px; font-size: 11px; color: #3c4043; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* Diğer Sonuçlar Butonu */
         .more-results-btn {
-            display: none;
-            width: 100%;
-            max-width: 652px;
-            margin: 20px 0 40px 130px;
-            padding: 10px 0;
-            background: #f1f3f4;
-            border: 1px solid #dadce0;
-            color: #3c4043;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            text-align: center;
+            display: none; width: 100%; max-width: 652px;
+            margin: 20px 0 40px 130px; padding: 12px 0;
+            background: #f1f3f4; border: 1px solid #dadce0;
+            color: #3c4043; border-radius: 24px;
+            font-size: 14px; font-weight: 500; cursor: pointer; text-align: center;
         }
         .more-results-btn:hover { background: #e8eaed; }
         body.results-mode .more-results-btn { display: block; }
 
-        .status-msg { color: #70757a; font-style: italic; }
+        .status-msg { color: #70757a; font-style: normal; font-size: 14px; padding: 10px 0; }
 
-        footer { background-color: var(--footer-bg); border-top: 1px solid #e4e4e4; padding: 12px 20px; font-size: 14px; color: var(--footer-text); display: flex; justify-content: space-between; align-items: center; }
+        footer { background-color: var(--footer-bg); border-top: 1px solid #dadce0; padding: 12px 20px; font-size: 14px; color: var(--footer-text); display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
         .footer-left { display: flex; align-items: center; gap: 20px; }
         select { background: transparent; border: 1px solid var(--border-color); color: var(--footer-text); border-radius: 4px; padding: 2px 6px; outline: none; cursor: pointer; }
     </style>
@@ -174,8 +139,8 @@
         let currentPage = 1;
 
         const languages = {
-            'tr-TR': { search: "Ara", all: "Tümü", img: "Görseller", lang: "Dil", ph: "İnternette arama yapın...", copy: "© Wind Developers", loading: "JILLEX aranıyor...", noRes: "Sonuç bulunamadı.", fail: "Sunucu hatası oluştu.", more: "Diğer Sonuçlar" },
-            'en-US': { search: "Search", all: "All", img: "Images", lang: "Language", ph: "Search the web...", copy: "© Wind Developers", loading: "JILLEX searching...", noRes: "No results found.", fail: "Server connection failed.", more: "More Results" }
+            'tr-TR': { search: "Ara", all: "Tümü", img: "Görseller", lang: "Dil", ph: "İnternette arama yapın...", copy: "© Wind Developers", loading: "JILLEX sonuçları getiriyor...", noRes: "Sonuç bulunamadı.", fail: "Arama motoru bağlantısı yenileniyor, lütfen tekrar deneyin.", more: "Diğer Sonuçlar" },
+            'en-US': { search: "Search", all: "All", img: "Images", lang: "Language", ph: "Search the web...", copy: "© Wind Developers", loading: "JILLEX fetching results...", noRes: "No results found.", fail: "Connection reset, please try again.", more: "More Results" }
         };
 
         function updateInterfaceLanguage() {
@@ -254,7 +219,7 @@
                         const card = document.createElement('div');
                         card.className = 'image-card';
                         card.innerHTML = `
-                            <a href="${item.url}" target="_blank"><img src="${item.img_src}" onerror="this.src='https://placehold.co/150x120/f8f9fa/1a73e8?text=Image'"></a>
+                            <a href="${item.url}" target="_blank"><img src="${item.img_src}" onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300&q=80'"></a>
                             <span>${item.title}</span>
                         `;
                         imgGrid.appendChild(card);
@@ -265,8 +230,8 @@
                         card.className = 'result-card';
                         card.innerHTML = `
                             <div class="result-header">
-                                <img src="${item.logo}" class="result-logo" onerror="this.style.display='none'">
-                                <cite>${item.url.substring(0, 60)}</cite>
+                                <img src="${item.logo}" class="result-logo" onerror="this.src='https://www.google.com/s2/favicons?sz=64&domain=example.com'">
+                                <cite>${item.url}</cite>
                             </div>
                             <a href="${item.url}" target="_blank">${item.title}</a>
                             <p>${item.content}</p>
