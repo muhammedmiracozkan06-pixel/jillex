@@ -3,86 +3,363 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JILLhgc</title>
+    <title>JILLEX - Bağımsız Arama Servisi</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: #0c0c0e; color: #ffffff; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        .brand-name { font-size: 4rem; font-weight: 900; letter-spacing: -2px; margin-bottom: 25px; margin-top: 5vh; background: linear-gradient(45deg, #00f2fe, #4facfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0px 4px 30px rgba(0, 242, 254, 0.3); }
-        .search-box { display: flex; width: 100%; max-width: 650px; background: #16161a; border: 1px solid #2d2d34; border-radius: 50px; padding: 6px; transition: all 0.3s ease; box-shadow: 0 10px 25px rgba(0,0,0,0.4); margin-bottom: 40px; }
-        .search-box:focus-within { border-color: #00f2fe; box-shadow: 0 10px 30px rgba(0, 242, 254, 0.25); }
-        .search-input { flex: 1; background: transparent; border: none; outline: none; padding: 15px 25px; font-size: 1.1rem; color: #fff; }
-        .search-input::placeholder { color: #5c5c66; }
-        .search-btn { background: linear-gradient(45deg, #00f2fe, #4facfe); border: none; outline: none; color: #0c0c0e; font-weight: bold; font-size: 1rem; padding: 0 35px; border-radius: 40px; cursor: pointer; }
-        #results { width: 100%; max-width: 650px; display: flex; flex-direction: column; gap: 20px; }
-        .result-item { background: #16161a; padding: 22px; border-radius: 16px; border: 1px solid #2d2d34; transition: transform 0.2s ease; }
-        .result-item:hover { transform: translateY(-2px); border-color: #4facfe; }
-        .result-title { font-size: 1.3rem; color: #00f2fe; text-decoration: none; font-weight: 600; display: inline-block; margin-bottom: 6px; }
-        .result-title:hover { text-decoration: underline; }
-        .result-link { color: #5c5c66; font-size: 0.85rem; margin-bottom: 8px; word-break: break-all; }
-        .result-text { color: #b5b5c6; font-size: 1rem; line-height: 1.5; }
-        .status-text { text-align: center; color: #5c5c66; font-size: 1.1rem; }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0b0f19;
+            color: #f8fafc;
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .main-wrapper {
+            flex: 1;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .logo-area {
+            text-align: center;
+            margin-bottom: 25px;
+            margin-top: 8vh;
+        }
+        .logo-area h1 {
+            font-size: 60px;
+            font-weight: 800;
+            letter-spacing: -3px;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+        }
+        .logo-area p {
+            color: #64748b;
+            margin: 5px 0 0 0;
+            font-size: 14px;
+        }
+        
+        /* Kategori Sekmeleri */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            color: #38bdf8;
+            border-bottom-color: #38bdf8;
+        }
+        .tab-btn:hover { color: #f1f5f9; }
+
+        .search-area {
+            max-width: 650px;
+            margin: 0 auto;
+        }
+        .search-box {
+            display: flex;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 30px;
+            padding: 6px 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        .search-box:focus-within {
+            border-color: #38bdf8;
+            box-shadow: 0 4px 25px rgba(56, 189, 248, 0.15);
+        }
+        .search-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: white;
+            font-size: 16px;
+            padding: 10px;
+        }
+        .search-box button {
+            background: #38bdf8;
+            color: #0b0f19;
+            border: none;
+            border-radius: 20px;
+            padding: 0 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .search-box button:hover { background: #0ea5e9; }
+        
+        /* Sonuç Alanı */
+        #results { margin-top: 35px; }
+        
+        /* Genel Metin Sonuçları */
+        .result-item {
+            background: #131926;
+            border: 1px solid #1e293b;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            transition: transform 0.2s;
+        }
+        .result-item:hover {
+            transform: translateY(-2px);
+            border-color: #334155;
+        }
+        .result-item a {
+            color: #38bdf8;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+        .result-item a:hover { text-decoration: underline; }
+        .result-url { color: #64748b; font-size: 12px; word-break: break-all; margin-bottom: 8px;}
+        .result-desc { color: #cbd5e1; font-size: 14px; line-height: 1.5; }
+        
+        /* Görsel Sonuçları Izgarası */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .image-item {
+            background: #131926;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .image-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            background: #0f172a;
+        }
+        .image-item span {
+            padding: 8px;
+            font-size: 12px;
+            color: #cbd5e1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .loading { text-align: center; color: #64748b; font-style: italic; margin-top: 20px; }
+        
+        /* Alt Bilgi (Footer) */
+        footer {
+            background: #090d16;
+            border-top: 1px solid #1e293b;
+            padding: 15px 20px;
+            font-size: 13px;
+            color: #64748b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .footer-left { display: flex; align-items: center; gap: 15px; }
+        .footer-right { font-weight: 500; color: #475569; }
+        
+        .clickable-engine {
+            color: #38bdf8;
+            cursor: pointer;
+            font-weight: bold;
+            background: #1e293b;
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            user-select: none;
+        }
+        .clickable-engine:hover { background: #334155; color: #f8fafc; }
+        
+        select {
+            background: #1e293b;
+            color: #cbd5e1;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 3px 8px;
+            outline: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
-    <div class="brand-name">JILLEX</div>
+    <div class="main-wrapper">
+        <div class="logo-area">
+            <h1>JILLEX</h1>
+            <p>Wind Developers Bağımsız Arama Projesi</p>
+        </div>
 
-    <div class="search-box">
-        <input type="text" id="query" class="search-input" placeholder="JILLEX Sunucusu üzerinden arayın..." autocomplete="off" autofocus>
-        <button onclick="jillexSearch()" class="search-btn">Ara</button>
+        <div class="search-area">
+            <!-- Kategoriler -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="changeCategory('general', this)">Tümü</button>
+                <button class="tab-btn" onclick="changeCategory('images', this)">Görseller</button>
+                <button class="tab-btn" onclick="changeCategory('news', this)">Haberler</button>
+                <button class="tab-btn" onclick="changeCategory('shopping', this)">Alışveriş</button>
+            </div>
+
+            <!-- Arama Kutusu -->
+            <div class="search-box">
+                <input type="text" id="query" placeholder="İnternette izole arama yapın..." autocomplete="off">
+                <button onclick="searchJillex()">Ara</button>
+            </div>
+        </div>
+
+        <!-- Sonuç Penceresi -->
+        <div id="results"></div>
     </div>
 
-    <div id="results"></div>
+    <!-- Alt Kontrol Paneli (Footer) -->
+    <footer>
+        <div class="footer-left">
+            <span>© Wind Developers</span>
+            <div>
+                Arama Altyapısı: 
+                <span id="engineToggle" class="clickable-engine" onclick="toggleEngine()">SearXNG</span>
+            </div>
+            <div>
+                Bölge/Dil: 
+                <select id="countrySelect">
+                    <option value="tr-TR">Türkiye (Türkçe)</option>
+                    <option value="en-US">Global (İngilizce)</option>
+                    <option value="de-DE">Almanya (Almanca)</option>
+                    <option value="fr-FR">Fransa (Fransızca)</option>
+                </select>
+            </div>
+        </div>
+        <!-- Arama yapılınca teşekkür mesajı buraya dinamik eklenecek -->
+        <div class="footer-right" id="thanksContainer"></div>
+    </footer>
 
     <script>
+        let currentEngine = 'SearXNG';
+        let currentCategory = 'general';
+
+        // SearXNG ve Searx için çalışan stabil havuz instance adresleri
+        const engineUrls = {
+            'SearXNG': 'https://searx.be/search',
+            'Searx': 'https://searx.space/search' // Duruma göre searx.me veya alternatif genel node
+        };
+
+        // Enter ile arama tetikleme
         document.getElementById('query').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') jillexSearch();
+            if (e.key === 'Enter') searchJillex();
         });
 
-        async function jillexSearch() {
+        // Motor Değiştirme Fonksiyonu (Tıklanınca SearXNG <-> Searx değişir)
+        function toggleEngine() {
+            currentEngine = currentEngine === 'SearXNG' ? 'Searx' : 'SearXNG';
+            document.getElementById('engineToggle').innerText = currentEngine;
+            
+            // Eğer ekranda aktif arama varsa motor değişince otomatik yeniler
+            if (document.getElementById('query').value.trim()) {
+                searchJillex();
+            }
+        }
+
+        // Kategori Değiştirme
+        function changeCategory(cat, element) {
+            currentCategory = cat;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            
+            if (document.getElementById('query').value.trim()) {
+                searchJillex();
+            }
+        }
+
+        async function searchJillex() {
             const query = document.getElementById('query').value.trim();
-            const resultsContainer = document.getElementById('results');
+            const resultsDiv = document.getElementById('results');
+            const thanksContainer = document.getElementById('thanksContainer');
+            const selectedLanguage = document.getElementById('countrySelect').value;
+            
             if (!query) return;
 
-            resultsContainer.innerHTML = "<p class='status-text'>JILLEX Güvenli Kanal: Sunucu verileri çözümlüyor...</p>";
+            resultsDiv.innerHTML = '<div class="loading">JILLEX sonuçları organize ediyor...</div>';
+            thanksContainer.innerText = ''; // Arama başlarken footer'ı temizle
+
+            // Seçilen motora göre istek URL'si hazırlama
+            // SearXNG/Searx API parametreleri: &categories=, &language=, &format=json
+            let baseApiUrl = engineUrls[currentEngine];
+            let requestUrl = `${baseApiUrl}?q=${encodeURIComponent(query)}&categories=${currentCategory}&language=${selectedLanguage}&format=json`;
 
             try {
-                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-                const data = await response.json();
+                const response = await fetch(requestUrl);
+                if (!response.ok) throw new Error('Seçilen veri havuzuna bağlanılamadı.');
                 
-                resultsContainer.innerHTML = ""; 
+                const data = await response.json();
+                resultsDiv.innerHTML = ''; // Yükleniyor yazısını kaldır
 
-                // 1. Durum: Sunucudan yapılandırılmış bir hata objesi döndüyse ekrana bas
-                if (data.error === true) {
-                    resultsContainer.innerHTML = `
-                        <div class="result-item" style="border-color: #ff4e50;">
-                            <h3 style="color: #ff4e50; margin-bottom: 8px;">Google API Bildirimi</h3>
-                            <p class="result-text">Mesaj: ${data.message}</p>
-                            <p class="result-text" style="color: #5c5c66; font-size: 0.85rem; margin-top: 5px;">Hata Kodu: ${data.reason}</p>
-                        </div>
-                    `;
+                // Sonuç ekranına göre alt kısma teşekkür mesajı yerleştirme
+                thanksContainer.innerHTML = `Thank you <span style="color:#818cf8">${currentEngine}</span>`;
+
+                if (!data.results || data.results.length === 0) {
+                    resultsDiv.innerHTML = '<div class="loading">İlgili kategori altında veri listelenemedi.</div>';
                     return;
                 }
 
-                // 2. Durum: Gelen veri temiz olmasına rağmen arama sonucu yoksa bilgi ver
-                if (!data.items || data.items.length === 0) {
-                    resultsContainer.innerHTML = "<p class='status-text'>Aradığınız kelimeye ait hiçbir sonuç bulunamadı.</p>";
-                    return;
+                // GÖRSELLER sekmesi seçildiyse özel Grid tasarımı kullan
+                if (currentCategory === 'images') {
+                    const grid = document.createElement('div');
+                    grid.className = 'image-grid';
+                    
+                    data.results.slice(0, 24).forEach(item => {
+                        // Resim url'si veya önizleme url'si var mı kontrol et
+                        const imgUrl = item.img_src || item.thumbnail_src || item.url;
+                        if (imgUrl && imgUrl.startsWith('http')) {
+                            const imgCard = document.createElement('div');
+                            imgCard.className = 'image-item';
+                            imgCard.innerHTML = `
+                                <a href="${item.url}" target="_blank">
+                                    <img src="${imgUrl}" onerror="this.src='https://placehold.co/200x150/131926/38bdf8?text=JILLEX'" alt="${item.title}">
+                                </a>
+                                <span>${item.title || 'Görsel'}</span>
+                            `;
+                            grid.appendChild(imgCard);
+                        }
+                    });
+                    resultsDiv.appendChild(grid);
+                } 
+                // GENEL, HABERLER veya ALIŞVERİŞ sekmeleri (Metin tabanlı listeleme)
+                else {
+                    data.results.slice(0, 15).forEach(item => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'result-item';
+                        itemDiv.innerHTML = `
+                            <a href="${item.url}" target="_blank">${item.title}</a>
+                            <div class="result-url">${item.url}</div>
+                            <div class="result-desc">${item.content || 'Bu kaynak için içerik özeti bulunmuyor.'}</div>
+                        `;
+                        resultsDiv.appendChild(itemDiv);
+                    });
                 }
-
-                // 3. Durum: Başarılı senaryo, kartları ekrana çiz
-                data.items.forEach(item => {
-                    resultsContainer.innerHTML += `
-                        <div class="result-item">
-                            <a class="result-title" href="${item.link}" target="_blank">${item.title}</a>
-                            <div class="result-link">${item.displayLink}</div>
-                            <p class="result-text">${item.snippet || "Açıklama metni bulunmuyor."}</p>
-                        </div>
-                    `;
-                });
 
             } catch (error) {
-                resultsContainer.innerHTML = `<p class='status-text' style='color: #ff4e50;'>Bağlantı Köprüsü Koptu: ${error.message}</p>`;
+                resultsDiv.innerHTML = `<div class="loading" style="color:#ef4444;">Arama motoru havuz hatası: ${error.message}<br><span style="font-size:12px; color:#64748b;">(Farklı bir motora tıklayarak geçiş yapmayı deneyebilirsiniz.)</span></div>`;
             }
         }
     </script>
