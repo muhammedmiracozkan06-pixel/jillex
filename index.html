@@ -82,7 +82,6 @@
 
         footer { background-color: var(--footer-bg); border-top: 1px solid #dadce0; padding: 12px 20px; font-size: 14px; color: var(--footer-text); display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
         .footer-left { display: flex; align-items: center; gap: 20px; }
-        select { background: transparent; border: 1px solid var(--border-color); color: var(--footer-text); border-radius: 4px; padding: 2px 6px; outline: none; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -99,7 +98,7 @@
         </div>
         
         <div class="google-tabs">
-            <div class="tab-item active" id="tab-all">Tümü</div>
+            <div class="tab-item active">Tümü</div>
         </div>
     </div>
 
@@ -108,24 +107,10 @@
     <footer>
         <div class="footer-left">
             <span>© Wind Developers</span>
-            <div>
-                <span>Dil</span>: 
-                <select id="countrySelect">
-                    <option value="tr-TR">Türkçe</option>
-                </select>
-            </div>
         </div>
     </footer>
 
     <script>
-        // Sürekli değişen proxy havuzu (AllOrigins çökerse diğerleri devreye girer)
-        const proxyPool = [
-            (url) => `https://api.codetabs.com/v1/proxy?url=${encodeURIComponent(url)}`,
-            (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-            (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-            (url) => `https://win-cors-proxy.vercel.app/api/proxy?url=${encodeURIComponent(url)}`
-        ];
-
         document.getElementById('query').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') triggerSearchAction();
         });
@@ -170,97 +155,28 @@
             const resultsDiv = document.getElementById('results');
 
             document.body.classList.add('results-mode');
-            resultsDiv.innerHTML = `<div class="status-msg">JILLEX güvenli kanallardan veri çekiyor...</div>`;
+            resultsDiv.innerHTML = `<div class="status-msg">JILLEX güvenli sunucudan sonuçları çekiyor...</div>`;
 
-            const targetUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-            let success = false;
-
-            // Havuzdaki proxy'leri sırayla deniyoruz
-            for (let i = 0; i < proxyPool.length; i++) {
-                const proxyUrl = proxyPool[i](targetUrl);
-                console.log(`[JILLEX TRY] Proxy ${i + 1} deneniyor: ${proxyUrl}`);
-
-                try {
-                    // 6 saniyelik bir zaman aşımı (Timeout) sınırı koyuyoruz ki yanıt vermeyen proxy'de takılı kalmasın
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 6000);
-
-                    const response = await fetch(proxyUrl, { signal: controller.signal });
-                    clearTimeout(timeoutId);
-
-                    if (!response.ok) throw new Error(`HTTP Hata: ${response.status}`);
-                    
-                    const htmlText = await response.text();
-                    
-                    // Eğer dönen yanıt boş veya bariz hata sayfasıysa sonraki proxy'ye geç
-                    if (!htmlText || htmlText.length < 500) throw new Error("Yetersiz veya hatalı veri.");
-
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(htmlText, "text/html");
-                    const searchResults = doc.querySelectorAll('.links_main');
-
-                    if (searchResults.length > 0) {
-                        resultsDiv.innerHTML = ''; // Yükleniyor yazısını sil
-                        
-                        searchResults.forEach(result => {
-                            const titleElement = result.querySelector('.result__a');
-                            const snippetElement = result.nextElementSibling && result.nextElementSibling.classList.contains('result__snippet') 
-                                ? result.nextElementSibling 
-                                : null;
-
-                            if (titleElement) {
-                                const title = titleElement.innerText;
-                                let rawUrl = titleElement.getAttribute('href');
-                                
-                                if (rawUrl.includes('uddg=')) {
-                                    rawUrl = decodeURIComponent(rawUrl.split('uddg=')[1].split('&')[0]);
-                                }
-
-                                const snippet = snippetElement ? snippetElement.innerText : "Açıklama mevcut değil.";
-                                appendWebCard(title, rawUrl, snippet);
-                            }
-                        });
-
-                        success = true;
-                        console.log(`%c[JILLEX SUCCESS] Proxy ${i + 1} başarıyla çalıştı!`, "color: green; font-weight: bold;");
-                        break; // Sonuçlar başarıyla basıldıysa döngüden çık
-                    }
-                } catch (error) {
-                    console.warn(`[JILLEX WARN] Proxy ${i + 1} başarısız oldu: ${error.message}`);
-                }
-            }
-
-            // Eğer havuzdaki tüm proxy'ler zaman aşımına uğrar veya çökerse Wikipedia yedek planı devreye girer
-            if (!success) {
-                console.log("[JILLEX FALLBACK] Ana havuz yanıt vermedi. Wikipedia moduna geçiliyor...");
-                await executeFallbackWikipedia(query, resultsDiv);
-            }
-        }
-
-        async function executeFallbackWikipedia(query, resultsDiv) {
             try {
-                const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=opensearch&format=json&origin=*&search=${encodeURIComponent(query)}`;
-                const res = await fetch(wikiUrl);
-                const wikiData = await res.json();
+                // Doğrudan kendi Vercel Serverless API fonksiyonumuza istek atıyoruz
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                if (!response.ok) throw new Error("Sunucu yanıtı başarısız.");
+                
+                const data = await response.json();
+                resultsDiv.innerHTML = ''; 
 
-                resultsDiv.innerHTML = '';
-
-                const titles = wikiData[1] || [];
-                const descriptions = wikiData[2] || [];
-                const links = wikiData[3] || [];
-
-                if (titles.length === 0) {
-                    resultsDiv.innerHTML = `<div class="status-msg">Hiçbir kanaldan veri alınamadı. Lütfen daha sonra tekrar deneyin.</div>`;
+                if (!data || data.length === 0) {
+                    resultsDiv.innerHTML = `<div class="status-msg">Hiçbir sonuç bulunamadı.</div>`;
                     return;
                 }
 
-                for (let i = 0; i < titles.length; i++) {
-                    if (titles[i] && links[i]) {
-                        appendWebCard(titles[i], links[i], descriptions[i] || `${titles[i]} hakkında bilgi.`);
-                    }
-                }
-            } catch (e) {
-                resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">Bağlantı hatası oluştu. Sunucular yanıt vermiyor.</div>`;
+                data.forEach(item => {
+                    appendWebCard(item.title, item.url, item.snippet);
+                });
+
+            } catch (error) {
+                console.error("[JILLEX ERROR]", error);
+                resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">Sunucu bağlantı hatası oluştu.</div>`;
             }
         }
 
