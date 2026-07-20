@@ -1,7 +1,5 @@
-import fetch from 'node-fetch';
-
 export default async function handler(req, res) {
-    // CORS Başlıklarını Ayarla (Ön yüzün güvenle erişebilmesi için)
+    // CORS Başlıklarını Ayarla
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
@@ -19,6 +17,8 @@ export default async function handler(req, res) {
 
     try {
         const targetUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(q)}`;
+        
+        // Node.js'in global fetch fonksiyonunu kullanıyoruz (Ekstra kütüphane gerektirmez)
         const response = await fetch(targetUrl, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
         const htmlText = await response.text();
         const results = [];
 
-        // Sunucu tarafında Regex ile HTML etiketlerini güvenli ve hızlıca ayıklıyoruz
+        // HTML'den veri ayıklama
         const resultRegex = /<div class="[^"]*links_main[^"]*">[\s\S]*?<a class="result__a" href="([^"]+)">([\s\S]*?)<\/a>[\s\S]*?<span class="result__snippet">([\s\S]*?)<\/span>/g;
         let match;
 
@@ -41,7 +41,6 @@ export default async function handler(req, res) {
             let title = match[2].replace(/<[^>]*>/g, '').trim();
             let snippet = match[3].replace(/<[^>]*>/g, '').trim();
 
-            // DuckDuckGo yönlendirme linklerini temizleme
             if (rawUrl.includes('uddg=')) {
                 rawUrl = decodeURIComponent(rawUrl.split('uddg=')[1].split('&')[0]);
             }
@@ -49,7 +48,7 @@ export default async function handler(req, res) {
             results.push({ title, url: rawUrl, snippet });
         }
 
-        // Eğer DuckDuckGo boş döndüyse Wikipedia yedek mekanizmasını sunucu tarafında çalıştır
+        // Eğer sonuç yoksa Wikipedia yedek planı
         if (results.length === 0) {
             const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=opensearch&format=json&search=${encodeURIComponent(q)}`;
             const wikiRes = await fetch(wikiUrl);
