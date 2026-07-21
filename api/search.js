@@ -1,4 +1,3 @@
-
 // api/search.js
 export default async function handler(req, res) {
     // CORS Başlıkları
