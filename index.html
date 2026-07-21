@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #202124;
+            --primary-blue: #1a73e8;
+            --border-color: #dadce0;
+            --footer-bg: #f8f9fa;
+            --footer-text: #70757a;
+            --card-title: #1a0dab;
+            --card-cite: #202124;
+            --card-snippet: #4d5156;
+            --panel-bg: #ffffff;
+            --panel-shadow: rgba(32,33,36,0.28);
+            --hover-bg: #f1f3f4;
+            --content-max: 652px;
+            --content-offset: 130px;
+        }
+        body.dark-mode {
+            --bg-color: #202124;
+            --text-color: #e8eaed;
+            --primary-blue: #8ab4f8;
+            --border-color: #3c4043;
+            --footer-bg: #171717;
+            --footer-text: #9aa0a6;
+            --card-title: #8ab4f8;
+            --card-cite: #bdc1c6;
+            --card-snippet: #bdc1c6;
+            --panel-bg: #2d2e30;
+            --panel-shadow: rgba(0,0,0,0.5);
+            --hover-bg: #3c4043;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: Roboto, arial, sans-serif;
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        /* Ayarlar simgesi */
+        .settings-trigger {
+            position: fixed; top: 16px; right: 16px; z-index: 100;
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; background: transparent; border: none;
+            color: var(--footer-text); font-size: 20px;
+        }
+        .settings-trigger:hover { background: var(--hover-bg); }
+        .settings-panel {
+            position: fixed; top: 60px; right: 16px; z-index: 100;
+            background: var(--panel-bg); border: 1px solid var(--border-color);
+            border-radius: 12px; box-shadow: 0 2px 10px var(--panel-shadow);
+            padding: 18px 20px; width: 260px; display: none;
+        }
+        .settings-panel.open { display: block; }
+        .settings-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 10px; }
+        .settings-row:last-child { margin-bottom: 0; }
+        .settings-row label { font-size: 14px; color: var(--text-color); }
+        .settings-row select {
+            background: var(--bg-color); color: var(--text-color);
+            border: 1px solid var(--border-color); border-radius: 6px;
+            padding: 4px 6px; font-size: 13px; max-width: 130px;
+        }
+        .switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; inset: 0; background: var(--border-color); border-radius: 22px; transition: 0.2s; }
+        .slider:before { content: ""; position: absolute; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+        .switch input:checked + .slider { background: var(--primary-blue); }
+        .switch input:checked + .slider:before { transform: translateX(18px); }
+
+        .search-container {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 20px; box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+        .main-header-block {
+            display: flex; flex-direction: column; align-items: center;
+            width: 100%; max-width: 800px; margin: 0 auto;
+        }
+        .logo-area { width: 100%; text-align: center; }
+        .logo-area h1 {
+            font-size: 90px; font-weight: bold;
+            color: var(--primary-blue); margin: 0 0 30px 0;
+            letter-spacing: -4px; user-select: none;
+        }
+        .search-wrapper { width: 100%; max-width: 780px; }
+        .search-box-row {
+            display: flex; align-items: center; width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 24px; padding: 4px 20px; background: var(--panel-bg);
+        }
+        .search-box-row:hover, .search-box-row:focus-within {
+            box-shadow: 0 1px 6px var(--panel-shadow);
+            border-color: rgba(223,225,229,0);
+        }
+        .search-box-row input {
+            flex: 1; min-width: 0; background: transparent; border: none;
+            outline: none; color: var(--text-color);
+            font-size: 17px; padding: 14px 6px;
+        }
+        .search-box-row button {
+            background: transparent; border: none;
+            color: var(--primary-blue); font-weight: bold;
+            font-size: 15px; cursor: pointer; padding: 0 10px; flex-shrink: 0;
+        }
+        body.results-mode .search-container {
+            justify-content: flex-start; align-items: flex-start;
+            padding: 20px 20px 0 20px; flex: 0 0 auto;
+        }
+        body.results-mode .logo-area { width: auto; }
+        body.results-mode .logo-area h1 { font-size: 32px; margin: 0 20px 0 0; letter-spacing: -1px; }
+        body.results-mode .main-header-block { flex-direction: row; align-items: center; width: 100%; max-width: 900px; }
+        body.results-mode .search-wrapper { max-width: 650px; }
+
+        .google-tabs {
+            display: none; width: 100%; max-width: 650px;
+            margin-left: var(--content-offset); border-bottom: 1px solid var(--border-color);
+            margin-top: 15px; gap: 20px; overflow-x: auto;
+        }
+        body.results-mode .google-tabs { display: flex; }
+        .tab-item { padding: 8px 2px; color: var(--footer-text); font-size: 14px; cursor: pointer; border-bottom: 3px solid transparent; user-select: none; white-space: nowrap; }
+        .tab-item.active { color: var(--primary-blue); border-bottom-color: var(--primary-blue); font-weight: 500; }
+
+        #results { max-width: var(--content-max); margin-left: var(--content-offset); padding: 20px; box-sizing: border-box; flex: 1; }
+        body:not(.results-mode) #results { display: none; }
+
+        .result-card { margin-bottom: 28px; }
+        .result-header { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+        .result-logo { width: 18px; height: 18px; border-radius: 4px; object-fit: contain; background: var(--hover-bg); }
+        .result-card cite { font-size: 12px; color: var(--card-cite); font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 500px; }
+        .result-card a { color: var(--card-title); text-decoration: none; font-size: 20px; display: block; margin-top: 2px; }
+        .result-card a:hover { text-decoration: underline; }
+        .result-card p { margin: 4px 0 0 0; font-size: 14px; color: var(--card-snippet); line-height: 1.58; }
+
+        #results.images-mode { max-width: 900px; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+        .image-card { display: block; border-radius: 8px; overflow: hidden; background: var(--hover-bg); text-decoration: none; }
+        .image-card img { width: 100%; height: 140px; object-fit: cover; display: block; }
+        .image-card span { display: block; font-size: 12px; color: var(--text-color); padding: 6px 8px; }
+
+        .status-msg { color: var(--footer-text); font-style: normal; font-size: 14px; padding: 10px 0; }
+
+        .load-more-wrap { max-width: var(--content-max); margin-left: var(--content-offset); padding: 0 20px 40px; }
+        body.results-mode.images-active .load-more-wrap,
+        body.results-mode.images-active #results { max-width: 900px; }
+        .load-more-btn {
+            display: block; margin: 10px 0 30px; padding: 10px 24px;
+            border: 1px solid var(--border-color); border-radius: 20px;
+            background: var(--panel-bg); color: var(--primary-blue);
+            font-size: 14px; cursor: pointer;
+        }
+        .load-more-btn:hover { box-shadow: 0 1px 6px var(--panel-shadow); }
+        .load-more-btn:disabled { opacity: 0.5; cursor: default; }
+
+        footer { background-color: var(--footer-bg); border-top: 1px solid var(--border-color); padding: 12px 20px; font-size: 14px; color: var(--footer-text); display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+        .footer-left { display: flex; align-items: center; gap: 20px; }
+
+        /* ================= CİHAZA GÖRE UYUM ================= */
+
+        /* Mobil telefon */
+        body.device-mobile { --content-offset: 0px; }
+        body.device-mobile .logo-area h1 { font-size: 56px; letter-spacing: -2px; }
+        body.device-mobile.results-mode .logo-area h1 { font-size: 24px; margin-right: 12px; }
+        body.device-mobile .search-wrapper { max-width: 100%; }
+        body.device-mobile .main-header-block { max-width: 100%; }
+        body.device-mobile.results-mode .main-header-block { flex-wrap: wrap; }
+        body.device-mobile .google-tabs, body.device-mobile #results, body.device-mobile .load-more-wrap {
+            max-width: 100%; padding-left: 16px; padding-right: 16px;
+        }
+        body.device-mobile #results.images-mode { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+        body.device-mobile .settings-panel { width: calc(100vw - 32px); right: 16px; }
+
+        /* Tablet */
+        body.device-tablet { --content-offset: 48px; }
+        body.device-tablet .logo-area h1 { font-size: 72px; }
+        body.device-tablet.results-mode .logo-area h1 { font-size: 28px; }
+        body.device-tablet .google-tabs, body.device-tablet #results, body.device-tablet .load-more-wrap {
+            max-width: 720px;
+        }
+
+        /* Televizyon (uzaktan kumanda ile gezinme: büyük, yüksek kontrast, belirgin odak) */
+        body.device-tv { --content-offset: 80px; font-size: 20px; }
+        body.device-tv .logo-area h1 { font-size: 120px; }
+        body.device-tv.results-mode .logo-area h1 { font-size: 44px; }
+        body.device-tv .search-box-row input { font-size: 26px; padding: 20px 10px; }
+        body.device-tv .search-box-row button { font-size: 22px; }
+        body.device-tv .tab-item { font-size: 20px; padding: 14px 4px; }
+        body.device-tv .result-card a { font-size: 26px; }
+        body.device-tv .result-card p { font-size: 18px; }
+        body.device-tv .load-more-btn { font-size: 20px; padding: 16px 32px; }
+        body.device-tv .settings-trigger { width: 56px; height: 56px; font-size: 28px; }
+        body.device-tv a:focus-visible,
+        body.device-tv button:focus-visible,
+        body.device-tv .tab-item:focus-visible,
+        body.device-tv [tabindex]:focus-visible {
+            outline: 4px solid var(--primary-blue); outline-offset: 4px; border-radius: 6px;
+        }
+        body.device-tv #results.images-mode { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px; }
+
+        /* Dar ekranlarda genel güvenlik ağı (device sınıfı ne olursa olsun) */
+        @media (max-width: 640px) {
+            .google-tabs, #results, .load-more-wrap { margin-left: 0; max-width: 100% !important; padding-left: 16px; padding-right: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="settings-trigger" id="settingsTrigger" onclick="toggleSettingsPanel()" title="Ayarlar">⚙️</button>
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-row">
+            <label id="darkModeLabel" for="darkModeToggle">Karanlık mod</label>
+            <label class="switch">
+                <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="settings-row">
+            <label id="interfaceLangLabel" for="interfaceLangSelect">Arayüz dili</label>
+            <select id="interfaceLangSelect" onchange="changeInterfaceLanguage(this.value)">
+                <option value="tr">Türkçe</option>
+                <option value="en">English</option>
+                <option value="de">Deutsch</option>
+                <option value="fr">Français</option>
+                <option value="es">Español</option>
+            </select>
+        </div>
+        <div class="settings-row">
+            <label id="searchLangLabel" for="searchLangSelect">Arama dili</label>
+            <select id="searchLangSelect" onchange="changeSearchLanguage(this.value)">
+                <option id="searchLangAllOpt" value="all">Tümü</option>
+                <option value="tr">Türkçe</option>
+                <option value="en">English</option>
+                <option value="de">Deutsch</option>
+                <option value="fr">Français</option>
+                <option value="es">Español</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <div class="main-header-block">
+            <div class="logo-area"><h1 id="jillexLogo" style="cursor:pointer;" onclick="goHome()">JILLEX</h1></div>
+            <div class="search-wrapper">
+                <div class="search-box-row">
+                    <input type="text" id="query" autocomplete="off">
+                    <button onclick="triggerSearchAction()" id="searchBtn">Ara</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="google-tabs">
+            <div class="tab-item active" id="tabAll" data-category="general" onclick="switchCategory('general')">Tümü</div>
+            <div class="tab-item" id="tabImages" data-category="images" onclick="switchCategory('images')">Görseller</div>
+            <div class="tab-item" id="tabNews" data-category="news" onclick="switchCategory('news')">Haberler</div>
+            <div class="tab-item" id="tabAI" onclick="openAI()">AI</div>
+        </div>
+    </div>
+
+    <div id="results"></div>
+    <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
+        <button class="load-more-btn" id="loadMoreBtn" onclick="loadMoreResults()">Diğer sonuçları göster</button>
+    </div>
+
+    <footer>
+        <div class="footer-left">
+            <span id="footerText">© Wind Developers</span>
+        </div>
+    </footer>
+
+    <script>
+        // ================= ÇEVİRİLER (arayüz dili) =================
+        const translations = {
+            tr: { searchBtn:"Ara", tabAll:"Tümü", tabImages:"Görseller", tabNews:"Haberler", tabAI:"AI", darkMode:"Karanlık mod", interfaceLang:"Arayüz dili", searchLang:"Arama dili", langAllOpt:"Tümü", fetching:"JILLEX sonuçları getiriyor...", noResults:"Sonuç bulunamadı. Lütfen farklı terimlerle arayın.", connError:"Bağlantı hatası oluştu.", loadMore:"Diğer sonuçları göster", loading:"Yükleniyor...", noMore:"Başka sonuç yok", footer:"© Wind Developers" },
+            en: { searchBtn:"Search", tabAll:"All", tabImages:"Images", tabNews:"News", tabAI:"AI", darkMode:"Dark mode", interfaceLang:"Interface language", searchLang:"Search language", langAllOpt:"All", fetching:"JILLEX is fetching results...", noResults:"No results found. Try different terms.", connError:"A connection error occurred.", loadMore:"Show more results", loading:"Loading...", noMore:"No more results", footer:"© Wind Developers" },
+            de: { searchBtn:"Suchen", tabAll:"Alle", tabImages:"Bilder", tabNews:"Nachrichten", tabAI:"KI", darkMode:"Dunkelmodus", interfaceLang:"Oberflächensprache", searchLang:"Suchsprache", langAllOpt:"Alle", fetching:"JILLEX ruft Ergebnisse ab...", noResults:"Keine Ergebnisse gefunden.", connError:"Verbindungsfehler aufgetreten.", loadMore:"Weitere Ergebnisse anzeigen", loading:"Lädt...", noMore:"Keine weiteren Ergebnisse", footer:"© Wind Developers" },
+            fr: { searchBtn:"Rechercher", tabAll:"Tout", tabImages:"Images", tabNews:"Actualités", tabAI:"IA", darkMode:"Mode sombre", interfaceLang:"Langue de l'interface", searchLang:"Langue de recherche", langAllOpt:"Tout", fetching:"JILLEX récupère les résultats...", noResults:"Aucun résultat trouvé.", connError:"Une erreur de connexion s'est produite.", loadMore:"Afficher plus de résultats", loading:"Chargement...", noMore:"Aucun autre résultat", footer:"© Wind Developers" },
+            es: { searchBtn:"Buscar", tabAll:"Todo", tabImages:"Imágenes", tabNews:"Noticias", tabAI:"IA", darkMode:"Modo oscuro", interfaceLang:"Idioma de la interfaz", searchLang:"Idioma de búsqueda", langAllOpt:"Todo", fetching:"JILLEX está obteniendo resultados...", noResults:"No se encontraron resultados.", connError:"Se produjo un error de conexión.", loadMore:"Mostrar más resultados", loading:"Cargando...", noMore:"No hay más resultados", footer:"© Wind Developers" }
+        };
+
+        let uiLang = 'tr';
+        function t(key) { return (translations[uiLang] || translations.tr)[key]; }
+
+        function applyStaticUI() {
+            document.documentElement.lang = uiLang;
+            document.getElementById('searchBtn').textContent = t('searchBtn');
+            document.getElementById('tabAll').textContent = t('tabAll');
+            document.getElementById('tabImages').textContent = t('tabImages');
+            document.getElementById('tabNews').textContent = t('tabNews');
+            document.getElementById('tabAI').textContent = t('tabAI');
+            document.getElementById('darkModeLabel').textContent = t('darkMode');
+            document.getElementById('interfaceLangLabel').textContent = t('interfaceLang');
+            document.getElementById('searchLangLabel').textContent = t('searchLang');
+            document.getElementById('searchLangAllOpt').textContent = t('langAllOpt');
+            document.getElementById('loadMoreBtn').textContent = t('loadMore');
+            document.getElementById('footerText').textContent = t('footer');
+        }
+
+        function changeInterfaceLanguage(lang) {
+            uiLang = lang;
+            localStorage.setItem('jillex-ui-lang', lang);
+            applyStaticUI();
+        }
+
+        // ================= DURUM =================
+        let currentCategory = 'general';
+        let currentSearchLang = 'all';
+        let currentPage = 1;
+        let currentQuery = '';
+
+        // ================= AYARLAR PANELİ =================
+        function toggleSettingsPanel() {
+            document.getElementById('settingsPanel').classList.toggle('open');
+        }
+        document.addEventListener('click', function(e) {
+            const panel = document.getElementById('settingsPanel');
+            const trigger = document.getElementById('settingsTrigger');
+            if (panel.classList.contains('open') && !panel.contains(e.target) && e.target !== trigger) {
+                panel.classList.remove('open');
+            }
+        });
+
+        // ================= KARANLIK MOD =================
+        function toggleDarkMode(enabled) {
+            document.body.classList.toggle('dark-mode', enabled);
+            localStorage.setItem('jillex-dark-mode', enabled ? '1' : '0');
+        }
+
+        // ================= ARAMA DİLİ (sonuçları filtreler, backend'e gider) =================
+        function changeSearchLanguage(lang) {
+            currentSearchLang = lang;
+            localStorage.setItem('jillex-search-lang', lang);
+            if (currentQuery) executeSearch(true);
+        }
+
+        // ================= AI SEKMESİ =================
+        function openAI() {
+            window.open('https://matylo.vercel.app', '_blank');
+        }
+
+        // ================= KATEGORİ SEKMELERİ =================
+        function switchCategory(category) {
+            if (category === currentCategory) return;
+            currentCategory = category;
+            document.querySelectorAll('.tab-item[data-category]').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.category === category);
+            });
+            if (currentQuery) executeSearch(true);
+        }
+
+        document.getElementById('query').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') triggerSearchAction();
+        });
+
+        function triggerSearchAction() {
+            const query = document.getElementById('query').value.trim();
+            if (!query) return;
+            const newUrl = `${window.location.origin}${window.location.pathname}?q=${encodeURIComponent(query)}`;
+            window.history.pushState({ path: newUrl }, '', newUrl);
+            executeSearch(true);
+        }
+
+        window.addEventListener('popstate', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryParam = urlParams.get('q');
+            if (queryParam) {
+                document.getElementById('query').value = queryParam;
+                executeSearch(true);
+            } else { goHome(); }
+        });
+
+        function appendWebCard(title, url, content) {
+            const resultsDiv = document.getElementById('results');
+            let domain = "link";
+            try { domain = new URL(url).hostname; } catch(e){}
+
+            const card = document.createElement('div');
+            card.className = 'result-card';
+            card.innerHTML = `
+                <div class="result-header">
+                    <img src="https://www.google.com/s2/favicons?sz=64&domain=${domain}" class="result-logo" onerror="this.src='https://www.google.com/s2/favicons?sz=64&domain=example.com'">
+                    <cite>${url}</cite>
+                </div>
+                <a href="${url}" target="_blank">${title}</a>
+                <p>${content}</p>
+            `;
+            resultsDiv.appendChild(card);
+        }
+
+        function appendImageCard(title, url, imageSrc) {
+            const resultsDiv = document.getElementById('results');
+            const a = document.createElement('a');
+            a.className = 'image-card';
+            a.href = url;
+            a.target = '_blank';
+            a.innerHTML = `
+                <img src="${imageSrc}" alt="${title}" loading="lazy" onerror="this.closest('.image-card').remove()">
+                <span>${title}</span>
+            `;
+            resultsDiv.appendChild(a);
+        }
+
+        function setResultsMode(category) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.className = category === 'images' ? 'images-mode' : '';
+            document.body.classList.toggle('images-active', category === 'images');
+        }
+
+        async function fetchResultsPage(query, category, lang, pageno) {
+            const url = `/api/search?q=${encodeURIComponent(query)}&category=${category}&lang=${lang}&pageno=${pageno}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Ana servis yanıt vermedi.");
+            return response.json();
+        }
+
+        function renderPage(data, category, append) {
+            const resultsDiv = document.getElementById('results');
+            if (!append) resultsDiv.innerHTML = '';
+
+            if (!Array.isArray(data) || data.length === 0) {
+                if (!append) resultsDiv.innerHTML = `<div class="status-msg">${t('noResults')}</div>`;
+                document.getElementById('loadMoreWrap').style.display = 'none';
+                return;
+            }
+
+            data.forEach(item => {
+                if (!item.title || !item.url) return;
+                if (category === 'images' && item.image) {
+                    appendImageCard(item.title, item.url, item.image);
+                } else if (category !== 'images') {
+                    appendWebCard(item.title, item.url, item.snippet || "");
+                }
+            });
+
+            document.getElementById('loadMoreWrap').style.display = 'block';
+        }
+
+        async function executeSearch(resetPage) {
+            const query = document.getElementById('query').value.trim();
+            if (!query) return;
+            currentQuery = query;
+            if (resetPage) currentPage = 1;
+
+            const resultsDiv = document.getElementById('results');
+            document.body.classList.add('results-mode');
+            setResultsMode(currentCategory);
+            document.getElementById('loadMoreWrap').style.display = 'none';
+            resultsDiv.innerHTML = `<div class="status-msg">${t('fetching')}</div>`;
+
+            try {
+                const data = await fetchResultsPage(query, currentCategory, currentSearchLang, currentPage);
+                renderPage(data, currentCategory, false);
+            } catch (error) {
+                console.error("[JILLEX FALLBACK]", error);
+                if (currentCategory === 'general') {
+                    await executeFallbackWikipedia(query, resultsDiv);
+                } else {
+                    resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">${t('connError')}</div>`;
+                }
+            }
+        }
+
+        async function loadMoreResults() {
+            const btn = document.getElementById('loadMoreBtn');
+            btn.disabled = true;
+            btn.textContent = t('loading');
+            try {
+                currentPage += 1;
+                const data = await fetchResultsPage(currentQuery, currentCategory, currentSearchLang, currentPage);
+                if (!data || data.length === 0) {
+                    btn.textContent = t('noMore');
+                    return;
+                }
+                renderPage(data, currentCategory, true);
+                btn.textContent = t('loadMore');
+            } catch (e) {
+                console.error("[JILLEX LOAD MORE]", e);
+                currentPage -= 1;
+                btn.textContent = t('loadMore');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function executeFallbackWikipedia(query, resultsDiv) {
+            try {
+                const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=opensearch&format=json&origin=*&search=${encodeURIComponent(query)}`;
+                const res = await fetch(wikiUrl);
+                const wikiData = await res.json();
+
+                resultsDiv.innerHTML = '';
+
+                const titles = wikiData[1] || [];
+                const descriptions = wikiData[2] || [];
+                const links = wikiData[3] || [];
+
+                if (titles.length === 0) {
+                    resultsDiv.innerHTML = `<div class="status-msg">${t('noResults')}</div>`;
+                    return;
+                }
+
+                for (let i = 0; i < titles.length; i++) {
+                    if (titles[i] && links[i]) {
+                        appendWebCard(titles[i], links[i], descriptions[i] || `${titles[i]}`);
+                    }
+                }
+            } catch (e) {
+                resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">${t('connError')}</div>`;
+            }
+        }
+
+        function goHome() {
+            document.body.classList.remove('results-mode', 'images-active');
+            document.getElementById('query').value = '';
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('loadMoreWrap').style.display = 'none';
+            currentCategory = 'general';
+            currentPage = 1;
+            currentQuery = '';
+            document.querySelectorAll('.tab-item[data-category]').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.category === 'general');
+            });
+            const homeUrl = `${window.location.origin}${window.location.pathname}`;
+            window.history.pushState({ path: homeUrl }, '', homeUrl);
+        }
+
+        // ================= CİHAZ ALGILAMA =================
+        function detectDevice() {
+            const ua = navigator.userAgent.toLowerCase();
+
+            const isTV = /smart-tv|smarttv|googletv|appletv|hbbtv|netcast|viera|aquos|bravia|philipstv|tizen|web0s|webos|crkey|firetv|aft[a-z]|roku|vidaa/.test(ua);
+            if (isTV) return 'tv';
+
+            const isMobileUA = /iphone|ipod|android.*mobile|windows phone|blackberry|mobi/.test(ua);
+            const isTabletUA = /ipad|android(?!.*mobile)|tablet|kindle|playbook|silk/.test(ua);
+            const width = window.innerWidth;
+            const coarsePointer = window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+
+            if (isTabletUA || (coarsePointer && width >= 601 && width <= 1180)) return 'tablet';
+            if (isMobileUA || (coarsePointer && width <= 600) || width <= 600) return 'mobile';
+            return 'desktop';
+        }
+
+        function applyDeviceClass() {
+            const device = detectDevice();
+            document.body.classList.remove('device-mobile', 'device-tablet', 'device-tv', 'device-desktop');
+            document.body.classList.add('device-' + device);
+        }
+
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(applyDeviceClass, 200);
+        });
+        applyDeviceClass();
+
+        // ================= BAŞLANGIÇ TERCİHLERİ =================
+        (function initPreferences() {
+            const savedDark = localStorage.getItem('jillex-dark-mode');
+            const darkEnabled = savedDark === '1' || (savedDark === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.getElementById('darkModeToggle').checked = darkEnabled;
+            document.body.classList.toggle('dark-mode', darkEnabled);
+
+            const savedSearchLang = localStorage.getItem('jillex-search-lang');
+            if (savedSearchLang) {
+                currentSearchLang = savedSearchLang;
+                document.getElementById('searchLangSelect').value = savedSearchLang;
+            }
+
+            const savedUiLang = localStorage.getItem('jillex-ui-lang');
+            const browserLang = (navigator.language || 'tr').slice(0, 2);
+            uiLang = savedUiLang || (translations[browserLang] ? browserLang : 'tr');
+            document.getElementById('interfaceLangSelect').value = uiLang;
+            applyStaticUI();
+        })();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('q')) {
+            document.getElementById('query').value = urlParams.get('q');
+            executeSearch(true);
+        }
+    </script>
+</body>
+</html>
