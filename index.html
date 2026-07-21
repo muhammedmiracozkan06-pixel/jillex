@@ -39,12 +39,8 @@
             --knowledge-bg: #2d2e30;
             --knowledge-border: #3c4043;
         }
-        body.bg-images-active {
-            background-color: transparent !important;
-        }
-        body.bg-images-active.dark-mode {
-            background-color: transparent !important;
-        }
+        body.bg-images-active { background-color: transparent !important; }
+        body.bg-images-active.dark-mode { background-color: transparent !important; }
         * { box-sizing: border-box; }
         body {
             margin: 0; padding: 0;
@@ -67,10 +63,7 @@
             color: var(--footer-text); font-size: 24px;
             transition: transform 0.3s ease;
         }
-        .settings-trigger:hover {
-            background: var(--hover-bg);
-            transform: rotate(90deg);
-        }
+        .settings-trigger:hover { background: var(--hover-bg); transform: rotate(90deg); }
         .settings-panel {
             position: fixed; top: 60px; right: 16px; z-index: 101;
             background: var(--panel-bg); border: 1px solid var(--border-color);
@@ -130,7 +123,6 @@
             padding: 0 10px; flex-shrink: 0;
             display: flex; align-items: center;
         }
-        /* Arama önerileri */
         .suggestions-box {
             position: absolute; top: 100%; left: 0; right: 0;
             background: var(--panel-bg); border: 1px solid var(--border-color);
@@ -163,7 +155,6 @@
         .tab-item { padding: 8px 2px; color: var(--footer-text); font-size: 14px; cursor: pointer; border-bottom: 3px solid transparent; user-select: none; white-space: nowrap; }
         .tab-item.active { color: var(--primary-blue); border-bottom-color: var(--primary-blue); font-weight: 500; }
 
-        /* Ana içerik: sonuçlar + knowledge panel */
         .content-area {
             display: flex; gap: 20px; padding: 20px 20px 0 20px;
             max-width: 1100px; margin-left: var(--content-offset);
@@ -244,6 +235,14 @@
             </label>
         </div>
         <div class="settings-row">
+            <label id="speedLabel" for="speedSelect">Arama Hızı</label>
+            <select id="speedSelect" onchange="changeSpeed(this.value)">
+                <option value="normal">Normal</option>
+                <option value="min">Min</option>
+                <option value="max">Max</option>
+            </select>
+        </div>
+        <div class="settings-row">
             <label id="interfaceLangLabel" for="interfaceLangSelect">Arayüz dili</label>
             <select id="interfaceLangSelect" onchange="changeInterfaceLanguage(this.value)">
                 <option value="tr">Türkçe</option>
@@ -304,13 +303,13 @@
     </footer>
 
     <script>
-        // ================= ÇEVİRİLER =================
+        // Çeviriler (kısa tutuldu, panelde sadece gerekenler)
         const translations = {
-            tr: { searchBtn:"Ara", tabAll:"Tümü", tabImages:"Görseller", tabNews:"Haberler", tabAI:"AI", darkMode:"Karanlık mod", bgImage:"Arka plan görseli", interfaceLang:"Arayüz dili", searchLang:"Arama dili", langAllOpt:"Tümü", fetching:"JILLEX sonuçları getiriyor...", noResults:"Sonuç bulunamadı.", connError:"Bağlantı hatası oluştu.", loadMore:"Diğer sonuçları göster", loading:"Yükleniyor...", noMore:"Başka sonuç yok", footer:"© Wind Developers" },
-            en: { searchBtn:"Search", tabAll:"All", tabImages:"Images", tabNews:"News", tabAI:"AI", darkMode:"Dark mode", bgImage:"Background image", interfaceLang:"Interface language", searchLang:"Search language", langAllOpt:"All", fetching:"JILLEX is fetching results...", noResults:"No results found.", connError:"Connection error.", loadMore:"Show more results", loading:"Loading...", noMore:"No more results", footer:"© Wind Developers" },
-            de: { searchBtn:"Suchen", tabAll:"Alle", tabImages:"Bilder", tabNews:"Nachrichten", tabAI:"KI", darkMode:"Dunkelmodus", bgImage:"Hintergrundbild", interfaceLang:"Oberflächensprache", searchLang:"Suchsprache", langAllOpt:"Alle", fetching:"JILLEX ruft Ergebnisse ab...", noResults:"Keine Ergebnisse.", connError:"Verbindungsfehler.", loadMore:"Weitere Ergebnisse", loading:"Lädt...", noMore:"Keine weiteren Ergebnisse", footer:"© Wind Developers" },
-            fr: { searchBtn:"Rechercher", tabAll:"Tout", tabImages:"Images", tabNews:"Actualités", tabAI:"IA", darkMode:"Mode sombre", bgImage:"Image de fond", interfaceLang:"Langue interface", searchLang:"Langue recherche", langAllOpt:"Tout", fetching:"Récupération des résultats...", noResults:"Aucun résultat.", connError:"Erreur de connexion.", loadMore:"Plus de résultats", loading:"Chargement...", noMore:"Fin des résultats", footer:"© Wind Developers" },
-            es: { searchBtn:"Buscar", tabAll:"Todo", tabImages:"Imágenes", tabNews:"Noticias", tabAI:"IA", darkMode:"Modo oscuro", bgImage:"Imagen de fondo", interfaceLang:"Idioma interfaz", searchLang:"Idioma búsqueda", langAllOpt:"Todo", fetching:"Obteniendo resultados...", noResults:"Sin resultados.", connError:"Error de conexión.", loadMore:"Más resultados", loading:"Cargando...", noMore:"No hay más", footer:"© Wind Developers" }
+            tr: { tabAll:"Tümü", tabImages:"Görseller", tabNews:"Haberler", tabAI:"AI", darkMode:"Karanlık mod", bgImage:"Arka plan görseli", speed:"Arama Hızı", interfaceLang:"Arayüz dili", searchLang:"Arama dili", langAllOpt:"Tümü", fetching:"JILLEX sonuçları getiriyor...", noResults:"Sonuç bulunamadı.", connError:"Bağlantı hatası oluştu.", loadMore:"Diğer sonuçları göster", loading:"Yükleniyor...", noMore:"Başka sonuç yok", footer:"© Wind Developers" },
+            en: { tabAll:"All", tabImages:"Images", tabNews:"News", tabAI:"AI", darkMode:"Dark mode", bgImage:"Background image", speed:"Search Speed", interfaceLang:"Interface language", searchLang:"Search language", langAllOpt:"All", fetching:"JILLEX is fetching results...", noResults:"No results found.", connError:"Connection error.", loadMore:"Show more results", loading:"Loading...", noMore:"No more results", footer:"© Wind Developers" },
+            de: { tabAll:"Alle", tabImages:"Bilder", tabNews:"Nachrichten", tabAI:"KI", darkMode:"Dunkelmodus", bgImage:"Hintergrundbild", speed:"Suchgeschwindigkeit", interfaceLang:"Oberflächensprache", searchLang:"Suchsprache", langAllOpt:"Alle", fetching:"JILLEX ruft Ergebnisse ab...", noResults:"Keine Ergebnisse.", connError:"Verbindungsfehler.", loadMore:"Weitere Ergebnisse", loading:"Lädt...", noMore:"Keine weiteren Ergebnisse", footer:"© Wind Developers" },
+            fr: { tabAll:"Tout", tabImages:"Images", tabNews:"Actualités", tabAI:"IA", darkMode:"Mode sombre", bgImage:"Image de fond", speed:"Vitesse de recherche", interfaceLang:"Langue interface", searchLang:"Langue recherche", langAllOpt:"Tout", fetching:"Récupération des résultats...", noResults:"Aucun résultat.", connError:"Erreur de connexion.", loadMore:"Plus de résultats", loading:"Chargement...", noMore:"Fin des résultats", footer:"© Wind Developers" },
+            es: { tabAll:"Todo", tabImages:"Imágenes", tabNews:"Noticias", tabAI:"IA", darkMode:"Modo oscuro", bgImage:"Imagen de fondo", speed:"Velocidad de búsqueda", interfaceLang:"Idioma interfaz", searchLang:"Idioma búsqueda", langAllOpt:"Todo", fetching:"Obteniendo resultados...", noResults:"Sin resultados.", connError:"Error de conexión.", loadMore:"Más resultados", loading:"Cargando...", noMore:"No hay más", footer:"© Wind Developers" }
         };
 
         let uiLang = 'tr';
@@ -324,6 +323,7 @@
             document.getElementById('tabAI').textContent = t('tabAI');
             document.getElementById('darkModeLabel').textContent = t('darkMode');
             document.getElementById('bgImageLabel').textContent = t('bgImage');
+            document.getElementById('speedLabel').textContent = t('speed');
             document.getElementById('interfaceLangLabel').textContent = t('interfaceLang');
             document.getElementById('searchLangLabel').textContent = t('searchLang');
             document.getElementById('searchLangAllOpt').textContent = t('langAllOpt');
@@ -339,23 +339,22 @@
 
         // ================= DURUM =================
         let currentCategory = 'general';
-        let currentSearchLang = 'all';
+        let currentSearchLang = localStorage.getItem('jillex-search-lang') || 'all';
+        let currentSpeed = localStorage.getItem('jillex-speed') || 'normal';
         let currentPage = 1;
         let currentQuery = '';
         let suggestionTimer = null;
 
-        // AYARLAR PANELİ
-        function toggleSettingsPanel(e) {
-            const panel = document.getElementById('settingsPanel');
-            panel.classList.toggle('open');
-            if (e) e.stopPropagation();
-        }
-        document.getElementById('settingsTrigger').addEventListener('click', toggleSettingsPanel);
-        document.addEventListener('click', function(e) {
-            const panel = document.getElementById('settingsPanel');
-            const trigger = document.getElementById('settingsTrigger');
-            if (panel.classList.contains('open') && !panel.contains(e.target) && e.target !== trigger) {
-                panel.classList.remove('open');
+        // AYARLAR PANELİ (çalışma garantili)
+        const settingsTrigger = document.getElementById('settingsTrigger');
+        const settingsPanel = document.getElementById('settingsPanel');
+        settingsTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settingsPanel.classList.toggle('open');
+        });
+        document.addEventListener('click', (e) => {
+            if (settingsPanel.classList.contains('open') && !settingsPanel.contains(e.target) && e.target !== settingsTrigger) {
+                settingsPanel.classList.remove('open');
             }
         });
 
@@ -400,9 +399,7 @@
         let bgTimer = null;
         function startBgTimer() {
             stopBgTimer();
-            bgTimer = setInterval(() => {
-                if (bgImagesEnabled) updateBackgroundImage();
-            }, 60000);
+            bgTimer = setInterval(() => { if (bgImagesEnabled) updateBackgroundImage(); }, 60000);
         }
         function stopBgTimer() {
             if (bgTimer) { clearInterval(bgTimer); bgTimer = null; }
@@ -415,10 +412,15 @@
             if (currentQuery) executeSearch(true);
         }
 
-        // AI
-        function openAI() {
-            window.open('https://matylo.vercel.app', '_blank');
+        // ARAMA HIZI
+        function changeSpeed(speed) {
+            currentSpeed = speed;
+            localStorage.setItem('jillex-speed', speed);
+            if (currentQuery) executeSearch(true);
         }
+
+        // AI
+        function openAI() { window.open('https://matylo.vercel.app', '_blank'); }
 
         // KATEGORİ
         function switchCategory(category) {
@@ -430,7 +432,7 @@
             if (currentQuery) executeSearch(true);
         }
 
-        // ================= ARAMA ÖNERİLERİ =================
+        // ÖNERİLER
         async function handleSuggestions() {
             clearTimeout(suggestionTimer);
             const q = document.getElementById('query').value.trim();
@@ -452,6 +454,7 @@
             document.getElementById('suggestionsBox').classList.remove('active');
             triggerSearchAction();
         }
+
         document.getElementById('query').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 document.getElementById('suggestionsBox').classList.remove('active');
@@ -462,6 +465,14 @@
         function triggerSearchAction() {
             const query = document.getElementById('query').value.trim();
             if (!query) return;
+
+            // jillex://advanced komutu
+            if (query === 'jillex://advanced') {
+                document.getElementById('query').value = '';
+                settingsPanel.classList.add('open');
+                return;
+            }
+
             const newUrl = `${window.location.origin}${window.location.pathname}?q=${encodeURIComponent(query)}`;
             window.history.pushState({ path: newUrl }, '', newUrl);
             executeSearch(true);
@@ -476,7 +487,7 @@
             } else { goHome(); }
         });
 
-        // ================= SONUÇLARI RENDER ETME =================
+        // SONUÇ GÖSTERİMİ
         function appendWebCard(title, url, content) {
             const resultsDiv = document.getElementById('results');
             let domain = "link";
@@ -511,7 +522,7 @@
         }
 
         async function fetchResultsPage(query, category, lang, pageno) {
-            const url = `/api/search?q=${encodeURIComponent(query)}&category=${category}&lang=${lang}&pageno=${pageno}`;
+            const url = `/api/search?q=${encodeURIComponent(query)}&category=${category}&lang=${lang}&pageno=${pageno}&speed=${currentSpeed}`;
             const response = await fetch(url);
             if (!response.ok) throw new Error("Ana servis yanıt vermedi.");
             return response.json();
@@ -533,14 +544,13 @@
             document.getElementById('loadMoreWrap').style.display = 'block';
         }
 
-        // ================= KNOWLEDGE PANEL =================
-        // Özel tanımlı bilgiler
+        // KNOWLEDGE PANEL
         const customKnowledge = {
             "wind developers": {
                 title: "Wind Developers",
                 subtitle: "Yazılım Kuruluşu",
                 description: "Wind Developers hayatınıza yararlı yazılımlar üretir. Bunların arasında Jillex Find veya Auth WMAİL örnek gösterilebilir.",
-                image: "" // istenirse logo
+                image: ""
             },
             "jillex": {
                 title: "Jillex",
@@ -548,14 +558,11 @@
                 description: "Şu anda kullandığınız arama motoru. Jillex internette gezinmenize yarayan bir arama motorudur.",
                 image: ""
             }
-            // Daha fazla özel tanım eklenebilir
         };
 
         async function showKnowledgePanel(query) {
             const panel = document.getElementById('knowledgePanel');
             const qLower = query.toLowerCase().trim();
-
-            // Önce özel tanımları kontrol et
             if (customKnowledge[qLower]) {
                 const info = customKnowledge[qLower];
                 panel.innerHTML = `
@@ -567,11 +574,8 @@
                 panel.classList.add('active');
                 return;
             }
-
-            // Wikipedia'dan bilgi almayı dene
             try {
-                const langMap = { tr: 'tr', en: 'en', de: 'de', fr: 'fr', es: 'es' };
-                const wikiLang = langMap[uiLang] || 'tr';
+                const wikiLang = uiLang === 'tr' ? 'tr' : 'en';
                 const resp = await fetch(`https://${wikiLang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`);
                 if (!resp.ok) throw new Error('No page');
                 const data = await resp.json();
@@ -584,13 +588,11 @@
                 `;
                 panel.classList.add('active');
             } catch (e) {
-                // Wikipedia'dan bilgi yoksa paneli gizle
                 panel.classList.remove('active');
                 panel.innerHTML = '';
             }
         }
 
-        // ================= ARAMA İŞLEMİ =================
         async function executeSearch(resetPage) {
             const query = document.getElementById('query').value.trim();
             if (!query) return;
@@ -606,17 +608,9 @@
             try {
                 const data = await fetchResultsPage(query, currentCategory, currentSearchLang, currentPage);
                 renderPage(data, currentCategory, false);
-                // Knowledge panel göster
                 showKnowledgePanel(query);
             } catch (error) {
-                console.error("[JILLEX FALLBACK]", error);
-                if (currentCategory === 'general') {
-                    await executeFallbackWikipedia(query, resultsDiv);
-                } else {
-                    resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">${t('connError')}</div>`;
-                }
-                // Hata olsa bile panel dene
-                showKnowledgePanel(query);
+                resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">${t('connError')}</div>`;
             }
         }
 
@@ -641,29 +635,6 @@
             }
         }
 
-        async function executeFallbackWikipedia(query, resultsDiv) {
-            try {
-                const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=opensearch&format=json&origin=*&search=${encodeURIComponent(query)}`;
-                const res = await fetch(wikiUrl);
-                const wikiData = await res.json();
-                resultsDiv.innerHTML = '';
-                const titles = wikiData[1] || [];
-                const descriptions = wikiData[2] || [];
-                const links = wikiData[3] || [];
-                if (titles.length === 0) {
-                    resultsDiv.innerHTML = `<div class="status-msg">${t('noResults')}</div>`;
-                    return;
-                }
-                for (let i = 0; i < titles.length; i++) {
-                    if (titles[i] && links[i]) {
-                        appendWebCard(titles[i], links[i], descriptions[i] || `${titles[i]}`);
-                    }
-                }
-            } catch (e) {
-                resultsDiv.innerHTML = `<div class="status-msg" style="color:#d93025;">${t('connError')}</div>`;
-            }
-        }
-
         function goHome() {
             document.body.classList.remove('results-mode', 'images-active');
             document.getElementById('query').value = '';
@@ -681,13 +652,15 @@
             window.history.pushState({ path: homeUrl }, '', homeUrl);
         }
 
-        // BAŞLANGIÇ TERCİHLERİ
-        (function initPreferences() {
+        // BAŞLANGIÇ
+        (function init() {
+            // Karanlık mod
             const savedDark = localStorage.getItem('jillex-dark-mode');
             const darkEnabled = savedDark === '1' || (savedDark === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
             document.getElementById('darkModeToggle').checked = darkEnabled;
             document.body.classList.toggle('dark-mode', darkEnabled);
 
+            // Arka plan
             const savedBg = localStorage.getItem('jillex-bg-images');
             bgImagesEnabled = savedBg === '1';
             document.getElementById('bgImageToggle').checked = bgImagesEnabled;
@@ -697,24 +670,26 @@
                 startBgTimer();
             }
 
-            const savedSearchLang = localStorage.getItem('jillex-search-lang');
-            if (savedSearchLang) {
-                currentSearchLang = savedSearchLang;
-                document.getElementById('searchLangSelect').value = savedSearchLang;
-            }
+            // Hız
+            document.getElementById('speedSelect').value = currentSpeed;
 
-            const savedUiLang = localStorage.getItem('jillex-ui-lang');
+            // Arama dili
+            document.getElementById('searchLangSelect').value = currentSearchLang;
+
+            // Arayüz dili
+            const savedUi = localStorage.getItem('jillex-ui-lang');
             const browserLang = (navigator.language || 'tr').slice(0, 2);
-            uiLang = savedUiLang || (translations[browserLang] ? browserLang : 'tr');
+            uiLang = savedUi || (translations[browserLang] ? browserLang : 'tr');
             document.getElementById('interfaceLangSelect').value = uiLang;
             applyStaticUI();
-        })();
 
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('q')) {
-            document.getElementById('query').value = urlParams.get('q');
-            executeSearch(true);
-        }
+            // URL'den gelen sorgu
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('q')) {
+                document.getElementById('query').value = urlParams.get('q');
+                executeSearch(true);
+            }
+        })();
     </script>
 </body>
 </html>
