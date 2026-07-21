@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jıllex </title>
+    <title>JILLEX - Professional Web Search</title>
     <style>
         :root {
             --bg-color: #ffffff;
@@ -35,6 +35,13 @@
             --panel-shadow: rgba(0,0,0,0.5);
             --hover-bg: #3c4043;
         }
+        /* Arka plan resmi aktifken body şeffaf kalır */
+        body.bg-images-active {
+            background-color: transparent !important;
+        }
+        body.bg-images-active.dark-mode {
+            background-color: transparent !important;
+        }
         * { box-sizing: border-box; }
         body {
             margin: 0; padding: 0;
@@ -44,22 +51,29 @@
             min-height: 100vh;
             display: flex; flex-direction: column;
             transition: background-color 0.2s ease, color 0.2s ease;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
         }
 
-        /* Ayarlar simgesi */
+        /* Ayarlar simgesi (SVG dişli) */
         .settings-trigger {
             position: fixed; top: 16px; right: 16px; z-index: 100;
             width: 40px; height: 40px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; background: transparent; border: none;
-            color: var(--footer-text); font-size: 20px;
+            color: var(--footer-text); font-size: 24px;
+            transition: transform 0.3s ease;
         }
-        .settings-trigger:hover { background: var(--hover-bg); }
+        .settings-trigger:hover {
+            background: var(--hover-bg);
+            transform: rotate(90deg);
+        }
         .settings-panel {
             position: fixed; top: 60px; right: 16px; z-index: 100;
             background: var(--panel-bg); border: 1px solid var(--border-color);
             border-radius: 12px; box-shadow: 0 2px 10px var(--panel-shadow);
-            padding: 18px 20px; width: 260px; display: none;
+            padding: 18px 20px; width: 280px; display: none;
         }
         .settings-panel.open { display: block; }
         .settings-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 10px; }
@@ -164,49 +178,7 @@
         footer { background-color: var(--footer-bg); border-top: 1px solid var(--border-color); padding: 12px 20px; font-size: 14px; color: var(--footer-text); display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
         .footer-left { display: flex; align-items: center; gap: 20px; }
 
-        /* ================= CİHAZA GÖRE UYUM ================= */
-
-        /* Mobil telefon */
-        body.device-mobile { --content-offset: 0px; }
-        body.device-mobile .logo-area h1 { font-size: 56px; letter-spacing: -2px; }
-        body.device-mobile.results-mode .logo-area h1 { font-size: 24px; margin-right: 12px; }
-        body.device-mobile .search-wrapper { max-width: 100%; }
-        body.device-mobile .main-header-block { max-width: 100%; }
-        body.device-mobile.results-mode .main-header-block { flex-wrap: wrap; }
-        body.device-mobile .google-tabs, body.device-mobile #results, body.device-mobile .load-more-wrap {
-            max-width: 100%; padding-left: 16px; padding-right: 16px;
-        }
-        body.device-mobile #results.images-mode { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
-        body.device-mobile .settings-panel { width: calc(100vw - 32px); right: 16px; }
-
-        /* Tablet */
-        body.device-tablet { --content-offset: 48px; }
-        body.device-tablet .logo-area h1 { font-size: 72px; }
-        body.device-tablet.results-mode .logo-area h1 { font-size: 28px; }
-        body.device-tablet .google-tabs, body.device-tablet #results, body.device-tablet .load-more-wrap {
-            max-width: 720px;
-        }
-
-        /* Televizyon (uzaktan kumanda ile gezinme: büyük, yüksek kontrast, belirgin odak) */
-        body.device-tv { --content-offset: 80px; font-size: 20px; }
-        body.device-tv .logo-area h1 { font-size: 120px; }
-        body.device-tv.results-mode .logo-area h1 { font-size: 44px; }
-        body.device-tv .search-box-row input { font-size: 26px; padding: 20px 10px; }
-        body.device-tv .search-box-row button { font-size: 22px; }
-        body.device-tv .tab-item { font-size: 20px; padding: 14px 4px; }
-        body.device-tv .result-card a { font-size: 26px; }
-        body.device-tv .result-card p { font-size: 18px; }
-        body.device-tv .load-more-btn { font-size: 20px; padding: 16px 32px; }
-        body.device-tv .settings-trigger { width: 56px; height: 56px; font-size: 28px; }
-        body.device-tv a:focus-visible,
-        body.device-tv button:focus-visible,
-        body.device-tv .tab-item:focus-visible,
-        body.device-tv [tabindex]:focus-visible {
-            outline: 4px solid var(--primary-blue); outline-offset: 4px; border-radius: 6px;
-        }
-        body.device-tv #results.images-mode { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px; }
-
-        /* Dar ekranlarda genel güvenlik ağı (device sınıfı ne olursa olsun) */
+        /* Mobil uyumluluk */
         @media (max-width: 640px) {
             .google-tabs, #results, .load-more-wrap { margin-left: 0; max-width: 100% !important; padding-left: 16px; padding-right: 16px; }
         }
@@ -214,12 +186,26 @@
 </head>
 <body>
 
-    <button class="settings-trigger" id="settingsTrigger" onclick="toggleSettingsPanel()" title="Ayarlar">⚙️</button>
+    <!-- Ayarlar butonu (dişli SVG) -->
+    <button class="settings-trigger" id="settingsTrigger" onclick="toggleSettingsPanel()" title="Ayarlar">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 15.5A3.5 3.5 0 1 1 15.5 12 3.5 3.5 0 0 1 12 15.5zm7.43-2.53a7.9 7.9 0 0 0 0-1.94l1.73-1.35a.83.83 0 0 0 .2-1.06l-1.63-2.83a.83.83 0 0 0-1.02-.36l-2.04.82a7.9 7.9 0 0 0-1.68-1l-.31-2.24a.83.83 0 0 0-.82-.71h-3.27a.83.83 0 0 0-.82.71l-.31 2.24a7.9 7.9 0 0 0-1.68 1l-2.04-.82a.83.83 0 0 0-1.02.36L3.05 8.62a.83.83 0 0 0 .2 1.06l1.73 1.35a7.9 7.9 0 0 0 0 1.94l-1.73 1.35a.83.83 0 0 0-.2 1.06l1.63 2.83a.83.83 0 0 0 1.02.36l2.04-.82a7.9 7.9 0 0 0 1.68 1l.31 2.24a.83.83 0 0 0 .82.71h3.27a.83.83 0 0 0 .82-.71l.31-2.24a7.9 7.9 0 0 0 1.68-1l2.04.82a.83.83 0 0 0 1.02-.36l1.63-2.83a.83.83 0 0 0-.2-1.06z"/>
+        </svg>
+    </button>
+
+    <!-- Ayarlar paneli -->
     <div class="settings-panel" id="settingsPanel">
         <div class="settings-row">
             <label id="darkModeLabel" for="darkModeToggle">Karanlık mod</label>
             <label class="switch">
                 <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="settings-row">
+            <label id="bgImageLabel" for="bgImageToggle">Arka plan görseli</label>
+            <label class="switch">
+                <input type="checkbox" id="bgImageToggle" onchange="toggleBgImages(this.checked)">
                 <span class="slider"></span>
             </label>
         </div>
@@ -277,13 +263,13 @@
     </footer>
 
     <script>
-        // ================= ÇEVİRİLER (arayüz dili) =================
+        // ================= ÇEVİRİLER =================
         const translations = {
-            tr: { searchBtn:"Ara", tabAll:"Tümü", tabImages:"Görseller", tabNews:"Haberler", tabAI:"AI", darkMode:"Karanlık mod", interfaceLang:"Arayüz dili", searchLang:"Arama dili", langAllOpt:"Tümü", fetching:"JILLEX sonuçları getiriyor...", noResults:"Sonuç bulunamadı. Lütfen farklı terimlerle arayın.", connError:"Bağlantı hatası oluştu.", loadMore:"Diğer sonuçları göster", loading:"Yükleniyor...", noMore:"Başka sonuç yok", footer:"© Wind Developers" },
-            en: { searchBtn:"Search", tabAll:"All", tabImages:"Images", tabNews:"News", tabAI:"AI", darkMode:"Dark mode", interfaceLang:"Interface language", searchLang:"Search language", langAllOpt:"All", fetching:"JILLEX is fetching results...", noResults:"No results found. Try different terms.", connError:"A connection error occurred.", loadMore:"Show more results", loading:"Loading...", noMore:"No more results", footer:"© Wind Developers" },
-            de: { searchBtn:"Suchen", tabAll:"Alle", tabImages:"Bilder", tabNews:"Nachrichten", tabAI:"KI", darkMode:"Dunkelmodus", interfaceLang:"Oberflächensprache", searchLang:"Suchsprache", langAllOpt:"Alle", fetching:"JILLEX ruft Ergebnisse ab...", noResults:"Keine Ergebnisse gefunden.", connError:"Verbindungsfehler aufgetreten.", loadMore:"Weitere Ergebnisse anzeigen", loading:"Lädt...", noMore:"Keine weiteren Ergebnisse", footer:"© Wind Developers" },
-            fr: { searchBtn:"Rechercher", tabAll:"Tout", tabImages:"Images", tabNews:"Actualités", tabAI:"IA", darkMode:"Mode sombre", interfaceLang:"Langue de l'interface", searchLang:"Langue de recherche", langAllOpt:"Tout", fetching:"JILLEX récupère les résultats...", noResults:"Aucun résultat trouvé.", connError:"Une erreur de connexion s'est produite.", loadMore:"Afficher plus de résultats", loading:"Chargement...", noMore:"Aucun autre résultat", footer:"© Wind Developers" },
-            es: { searchBtn:"Buscar", tabAll:"Todo", tabImages:"Imágenes", tabNews:"Noticias", tabAI:"IA", darkMode:"Modo oscuro", interfaceLang:"Idioma de la interfaz", searchLang:"Idioma de búsqueda", langAllOpt:"Todo", fetching:"JILLEX está obteniendo resultados...", noResults:"No se encontraron resultados.", connError:"Se produjo un error de conexión.", loadMore:"Mostrar más resultados", loading:"Cargando...", noMore:"No hay más resultados", footer:"© Wind Developers" }
+            tr: { searchBtn:"Ara", tabAll:"Tümü", tabImages:"Görseller", tabNews:"Haberler", tabAI:"AI", darkMode:"Karanlık mod", bgImage:"Arka plan görseli", interfaceLang:"Arayüz dili", searchLang:"Arama dili", langAllOpt:"Tümü", fetching:"JILLEX sonuçları getiriyor...", noResults:"Sonuç bulunamadı. Lütfen farklı terimlerle arayın.", connError:"Bağlantı hatası oluştu.", loadMore:"Diğer sonuçları göster", loading:"Yükleniyor...", noMore:"Başka sonuç yok", footer:"© Wind Developers" },
+            en: { searchBtn:"Search", tabAll:"All", tabImages:"Images", tabNews:"News", tabAI:"AI", darkMode:"Dark mode", bgImage:"Background image", interfaceLang:"Interface language", searchLang:"Search language", langAllOpt:"All", fetching:"JILLEX is fetching results...", noResults:"No results found. Try different terms.", connError:"A connection error occurred.", loadMore:"Show more results", loading:"Loading...", noMore:"No more results", footer:"© Wind Developers" },
+            de: { searchBtn:"Suchen", tabAll:"Alle", tabImages:"Bilder", tabNews:"Nachrichten", tabAI:"KI", darkMode:"Dunkelmodus", bgImage:"Hintergrundbild", interfaceLang:"Oberflächensprache", searchLang:"Suchsprache", langAllOpt:"Alle", fetching:"JILLEX ruft Ergebnisse ab...", noResults:"Keine Ergebnisse gefunden.", connError:"Verbindungsfehler aufgetreten.", loadMore:"Weitere Ergebnisse anzeigen", loading:"Lädt...", noMore:"Keine weiteren Ergebnisse", footer:"© Wind Developers" },
+            fr: { searchBtn:"Rechercher", tabAll:"Tout", tabImages:"Images", tabNews:"Actualités", tabAI:"IA", darkMode:"Mode sombre", bgImage:"Image de fond", interfaceLang:"Langue de l'interface", searchLang:"Langue de recherche", langAllOpt:"Tout", fetching:"JILLEX récupère les résultats...", noResults:"Aucun résultat trouvé.", connError:"Une erreur de connexion s'est produite.", loadMore:"Afficher plus de résultats", loading:"Chargement...", noMore:"Aucun autre résultat", footer:"© Wind Developers" },
+            es: { searchBtn:"Buscar", tabAll:"Todo", tabImages:"Imágenes", tabNews:"Noticias", tabAI:"IA", darkMode:"Modo oscuro", bgImage:"Imagen de fondo", interfaceLang:"Idioma de la interfaz", searchLang:"Idioma de búsqueda", langAllOpt:"Todo", fetching:"JILLEX está obteniendo resultados...", noResults:"No se encontraron resultados.", connError:"Se produjo un error de conexión.", loadMore:"Mostrar más resultados", loading:"Cargando...", noMore:"No hay más resultados", footer:"© Wind Developers" }
         };
 
         let uiLang = 'tr';
@@ -297,6 +283,7 @@
             document.getElementById('tabNews').textContent = t('tabNews');
             document.getElementById('tabAI').textContent = t('tabAI');
             document.getElementById('darkModeLabel').textContent = t('darkMode');
+            document.getElementById('bgImageLabel').textContent = t('bgImage');
             document.getElementById('interfaceLangLabel').textContent = t('interfaceLang');
             document.getElementById('searchLangLabel').textContent = t('searchLang');
             document.getElementById('searchLangAllOpt').textContent = t('langAllOpt');
@@ -316,7 +303,7 @@
         let currentPage = 1;
         let currentQuery = '';
 
-        // ================= AYARLAR PANELİ =================
+        // AYARLAR PANELİ
         function toggleSettingsPanel() {
             document.getElementById('settingsPanel').classList.toggle('open');
         }
@@ -328,25 +315,79 @@
             }
         });
 
-        // ================= KARANLIK MOD =================
+        // KARANLIK MOD
         function toggleDarkMode(enabled) {
             document.body.classList.toggle('dark-mode', enabled);
             localStorage.setItem('jillex-dark-mode', enabled ? '1' : '0');
         }
 
-        // ================= ARAMA DİLİ (sonuçları filtreler, backend'e gider) =================
+        // ARKA PLAN GÖRSELLERİ
+        let bgImagesEnabled = false;
+        const BG_IMAGES = ['img1.jpg', 'img2.jpg', 'img3.jpg']; // Bu dosyaları ana klasöre koy
+        const BG_INTERVAL = 10 * 60 * 1000; // 10 dakika
+
+        function toggleBgImages(enabled) {
+            bgImagesEnabled = enabled;
+            localStorage.setItem('jillex-bg-images', enabled ? '1' : '0');
+            if (enabled) {
+                document.body.classList.add('bg-images-active');
+                updateBackgroundImage();
+                startBgTimer();
+            } else {
+                document.body.classList.remove('bg-images-active');
+                document.body.style.backgroundImage = '';
+                stopBgTimer();
+            }
+        }
+
+        function updateBackgroundImage() {
+            if (!bgImagesEnabled) return;
+            const now = Date.now();
+            let index = parseInt(localStorage.getItem('bgImageIndex') || '0');
+            let lastUpdate = parseInt(localStorage.getItem('bgImageTimestamp') || '0');
+
+            if (now - lastUpdate > BG_INTERVAL || !lastUpdate) {
+                // 10 dakika geçmişse veya ilk kez yükleniyorsa rastgele değiştir
+                index = Math.floor(Math.random() * BG_IMAGES.length);
+                localStorage.setItem('bgImageIndex', index);
+                localStorage.setItem('bgImageTimestamp', now);
+            }
+            document.body.style.backgroundImage = `url(${BG_IMAGES[index]})`;
+        }
+
+        let bgTimer = null;
+        function startBgTimer() {
+            stopBgTimer();
+            bgTimer = setInterval(() => {
+                if (bgImagesEnabled) {
+                    const now = Date.now();
+                    const lastUpdate = parseInt(localStorage.getItem('bgImageTimestamp') || '0');
+                    if (now - lastUpdate >= BG_INTERVAL) {
+                        updateBackgroundImage();
+                    }
+                }
+            }, 60000); // her dakika kontrol
+        }
+        function stopBgTimer() {
+            if (bgTimer) {
+                clearInterval(bgTimer);
+                bgTimer = null;
+            }
+        }
+
+        // ARAMA DİLİ
         function changeSearchLanguage(lang) {
             currentSearchLang = lang;
             localStorage.setItem('jillex-search-lang', lang);
             if (currentQuery) executeSearch(true);
         }
 
-        // ================= AI SEKMESİ =================
+        // AI
         function openAI() {
             window.open('https://matylo.vercel.app', '_blank');
         }
 
-        // ================= KATEGORİ SEKMELERİ =================
+        // KATEGORİ
         function switchCategory(category) {
             if (category === currentCategory) return;
             currentCategory = category;
@@ -381,7 +422,6 @@
             const resultsDiv = document.getElementById('results');
             let domain = "link";
             try { domain = new URL(url).hostname; } catch(e){}
-
             const card = document.createElement('div');
             card.className = 'result-card';
             card.innerHTML = `
@@ -424,13 +464,11 @@
         function renderPage(data, category, append) {
             const resultsDiv = document.getElementById('results');
             if (!append) resultsDiv.innerHTML = '';
-
             if (!Array.isArray(data) || data.length === 0) {
                 if (!append) resultsDiv.innerHTML = `<div class="status-msg">${t('noResults')}</div>`;
                 document.getElementById('loadMoreWrap').style.display = 'none';
                 return;
             }
-
             data.forEach(item => {
                 if (!item.title || !item.url) return;
                 if (category === 'images' && item.image) {
@@ -439,7 +477,6 @@
                     appendWebCard(item.title, item.url, item.snippet || "");
                 }
             });
-
             document.getElementById('loadMoreWrap').style.display = 'block';
         }
 
@@ -495,18 +532,14 @@
                 const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=opensearch&format=json&origin=*&search=${encodeURIComponent(query)}`;
                 const res = await fetch(wikiUrl);
                 const wikiData = await res.json();
-
                 resultsDiv.innerHTML = '';
-
                 const titles = wikiData[1] || [];
                 const descriptions = wikiData[2] || [];
                 const links = wikiData[3] || [];
-
                 if (titles.length === 0) {
                     resultsDiv.innerHTML = `<div class="status-msg">${t('noResults')}</div>`;
                     return;
                 }
-
                 for (let i = 0; i < titles.length; i++) {
                     if (titles[i] && links[i]) {
                         appendWebCard(titles[i], links[i], descriptions[i] || `${titles[i]}`);
@@ -532,49 +565,32 @@
             window.history.pushState({ path: homeUrl }, '', homeUrl);
         }
 
-        // ================= CİHAZ ALGILAMA =================
-        function detectDevice() {
-            const ua = navigator.userAgent.toLowerCase();
-
-            const isTV = /smart-tv|smarttv|googletv|appletv|hbbtv|netcast|viera|aquos|bravia|philipstv|tizen|web0s|webos|crkey|firetv|aft[a-z]|roku|vidaa/.test(ua);
-            if (isTV) return 'tv';
-
-            const isMobileUA = /iphone|ipod|android.*mobile|windows phone|blackberry|mobi/.test(ua);
-            const isTabletUA = /ipad|android(?!.*mobile)|tablet|kindle|playbook|silk/.test(ua);
-            const width = window.innerWidth;
-            const coarsePointer = window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
-
-            if (isTabletUA || (coarsePointer && width >= 601 && width <= 1180)) return 'tablet';
-            if (isMobileUA || (coarsePointer && width <= 600) || width <= 600) return 'mobile';
-            return 'desktop';
-        }
-
-        function applyDeviceClass() {
-            const device = detectDevice();
-            document.body.classList.remove('device-mobile', 'device-tablet', 'device-tv', 'device-desktop');
-            document.body.classList.add('device-' + device);
-        }
-
-        let resizeTimer;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(applyDeviceClass, 200);
-        });
-        applyDeviceClass();
-
-        // ================= BAŞLANGIÇ TERCİHLERİ =================
+        // BAŞLANGIÇ TERCİHLERİ
         (function initPreferences() {
+            // Karanlık mod
             const savedDark = localStorage.getItem('jillex-dark-mode');
             const darkEnabled = savedDark === '1' || (savedDark === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
             document.getElementById('darkModeToggle').checked = darkEnabled;
             document.body.classList.toggle('dark-mode', darkEnabled);
 
+            // Arka plan görselleri
+            const savedBg = localStorage.getItem('jillex-bg-images');
+            bgImagesEnabled = savedBg === '1';
+            document.getElementById('bgImageToggle').checked = bgImagesEnabled;
+            if (bgImagesEnabled) {
+                document.body.classList.add('bg-images-active');
+                updateBackgroundImage();
+                startBgTimer();
+            }
+
+            // Arama dili
             const savedSearchLang = localStorage.getItem('jillex-search-lang');
             if (savedSearchLang) {
                 currentSearchLang = savedSearchLang;
                 document.getElementById('searchLangSelect').value = savedSearchLang;
             }
 
+            // Arayüz dili
             const savedUiLang = localStorage.getItem('jillex-ui-lang');
             const browserLang = (navigator.language || 'tr').slice(0, 2);
             uiLang = savedUiLang || (translations[browserLang] ? browserLang : 'tr');
@@ -582,6 +598,7 @@
             applyStaticUI();
         })();
 
+        // URL'den arama
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('q')) {
             document.getElementById('query').value = urlParams.get('q');
