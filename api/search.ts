@@ -24,6 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+    res.setHeader('Access-Control-Expose-Headers', 'X-Jillex-Debug');
 
     if (req.method === 'OPTIONS') {
         res.status(200).end();
@@ -79,6 +80,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         console.log(`[JILLEX] "${q}" (${category}) denemeleri:\n - ${attempts.join('\n - ')}`);
+        res.setHeader('X-Jillex-Debug', encodeURIComponent(attempts.join(' | ')));
         return res.status(200).json(results);
 
     } catch (error: any) {
@@ -92,6 +94,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 // yut, boş dizi dön
             }
         }
+        res.setHeader('X-Jillex-Debug', encodeURIComponent(`HATA: ${error?.message}` + (attempts.length ? ' | ' + attempts.join(' | ') : '')));
         return res.status(200).json(fallbackResults);
     }
 }
