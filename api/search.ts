@@ -52,8 +52,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let results: SearchResult[] = [];
 
         // ================= AŞAMA 1: DuckDuckGo + Mojeek (paralel yarış) =================
-        // İkisi de sadece genel kategori destekliyor. Aynı anda başlatılır,
-        // ilk boş olmayan sonuç kazanır, diğeri otomatik iptal edilir.
         if (category === 'general') {
             results = await raceFirstNonEmpty(
                 [
@@ -66,9 +64,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // ================= AŞAMA 2: SearXNG havuzu (paralel yarış) =================
-        // Tüm instance'lar (JSON + HTML varyantları) aynı anda denenir.
-        // Sıralı denemenin aksine, toplam bekleme süresi en yavaş değil en hızlı
-        // kaynağa göre belirlenir.
         if (results.length === 0) {
             results = await trySearxPoolParallel(params, attempts);
         }
@@ -100,9 +95,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 
 // ================= Paralel yarış yardımcı fonksiyonu =================
-// Verilen görevleri aynı anda başlatır. İlk boş olmayan sonucu döndüren
-// görev "kazanır" ve diğer tüm görevler abort edilir. Hepsi boş/hatalı
-// dönerse boş dizi döner.
 interface RaceTask {
     name: string;
     run: (signal: AbortSignal) => Promise<SearchResult[]>;
@@ -207,7 +199,7 @@ function extractRealUrl(href: string): string {
     }
 }
 
-// ================= Mojeek (HTML) — bağımsız index, key gerekmiyor =================
+// ================= Mojeek (HTML) =================
 async function fetchMojeekHtml(params: SearchParams, signal: AbortSignal): Promise<SearchResult[]> {
     const LANG_MAP: Record<string, string> = { tr: 'tr', en: 'en', de: 'de', fr: 'fr', es: 'es' };
     const usp = new URLSearchParams({ q: params.q });
@@ -245,6 +237,7 @@ async function fetchMojeekHtml(params: SearchParams, signal: AbortSignal): Promi
 
 // ================= SearXNG instance havuzu — paralel =================
 const INSTANCE_POOL = [
+    'https://searxng-jillex.onrender.com', // Senin kendi instance'ın (en öncelikli)
     'https://search.ctq.ro/searxng',
     'https://search.ctq.ro',
     'https://priv.au',
