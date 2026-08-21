@@ -51,11 +51,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         let results: SearchResult[] = [];
 
-        // ================= AŞAMA 1: DuckDuckGo + Mojeek (paralel yarış) =================
+        // ================= AŞAMA 1: Tüm HTML motorları paralel yarış =================
         if (category === 'general') {
             results = await raceFirstNonEmpty(
                 [
-                    { name: 'DuckDuckGo HTML', run: (signal) => fetchDuckDuckGoHtml(params, signal) },
+                    { name: 'Bing HTML', run: (signal) => fetchBingHtml(params, signal) },
+                    { name: 'DuckDuckGo Lite', run: (signal) => fetchDuckDuckGoLite(params, signal) },
+                    { name: 'Google HTML', run: (signal) => fetchGoogleHtml(params, signal) },
                     { name: 'Mojeek', run: (signal) => fetchMojeekHtml(params, signal) },
                 ],
                 5000,
@@ -146,14 +148,53 @@ function raceFirstNonEmpty(tasks: RaceTask[], timeoutMs: number, attempts: strin
     });
 }
 
-// ================= DuckDuckGo (HTML) =================
-async function fetchDuckDuckGoHtml(params: SearchParams, signal: AbortSignal): Promise<SearchResult[]> {
+// ================= Bing (HTML) =================
+async function fetchBingHtml(params: SearchParams, signal: AbortSignal): Promise<SearchResult[]> {
+    const CC_MAP: Record<string, string> = { tr: 'tr-TR', en: 'en-US', de: 'de-DE', fr: 'fr-FR', es: 'es-ES' };
+    const usp = new URLSearchParams({ q: params.q });
+    if (params.pageno > 1) usp.set('first', String((params.pageno - 1) * 10 + 1));
+
+    const response = await fetch(`https://www.bing.com/search?${usp.toString()}`, {
+        method: 'GET',
+        headers: {
+            'User-Agent': UA,
+            'Accept': 'text/html',
+            'Accept-Language': CC_MAP[params.lang] || 'en-US'
+        },
+        signal
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const html = await response.text();
+    const results: SearchResult[] = [];
+
+    // Bing sonuçları <li class="b_algo"> ... </li> blokları içinde
+    const blockRegex = /<li[^>]*class="b_algo"[^>]*>[\s\S]*?<\/li>/g;
+    const blocks = html.match(blockRegex) || [];
+
+    for (const block of blocks) {
+        const linkMatch = block.match(/<h2><a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a><\/h2>/);
+        if (!linkMatch) continue;
+        const url = decodeHtmlEntities(linkMatch[1]);
+        const title = stripHtml(linkMatch[2]);
+        if (!title || !url || !url.startsWith('http')) continue;
+        const snippetMatch = block.match(/<p>([\s\S]*?)<\/p>/) || block.match(/<div[^>]*class="b_caption"[^>]*>[\s\S]*?<p>([\s\S]*?)<\/p>/);
+        const snippet = snippetMatch ? stripHtml(snippetMatch[1]) : 'Açıklama mevcut değil.';
+        results.push({ title, url, snippet });
+    }
+
+    return results;
+}
+
+// ================= DuckDuckGo Lite (HTML) =================
+async function fetchDuckDuckGoLite(params: SearchParams, signal: AbortSignal): Promise<SearchResult[]> {
     const KL_MAP: Record<string, string> = { tr: 'tr-tr', en: 'us-en', de: 'de-de', fr: 'fr-fr', es: 'es-es' };
     const usp = new URLSearchParams({ q: params.q });
     if (KL_MAP[params.lang]) usp.set('kl', KL_MAP[params.lang]);
     if (params.pageno > 1) usp.set('s', String((params.pageno - 1) * 30));
 
-    const response = await fetch(`https://html.duckduckgo.com/html/?${usp.toString()}`, {
+    const response = await fetch(`https://lite.duckduckgo.com/lite/?${usp.toString()}`, {
         method: 'GET',
         headers: {
             'User-Agent': UA,
@@ -168,8 +209,9 @@ async function fetchDuckDuckGoHtml(params: SearchParams, signal: AbortSignal): P
     const html = await response.text();
     const results: SearchResult[] = [];
 
-    const titleRegex = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
-    const snippetRegex = /<a[^>]*class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
+    // Lite sürüm basit tablo yapısı: <a class="result-link" href="...">title</a> ve sonrasında <td class="result-snippet">
+    const titleRegex = /<a[^>]*class="result-link"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+    const snippetRegex = /<td[^>]*class="result-snippet"[^>]*>([\s\S]*?)<\/td>/g;
 
     const titles = [...html.matchAll(titleRegex)];
     const snippets = [...html.matchAll(snippetRegex)];
@@ -197,6 +239,46 @@ function extractRealUrl(href: string): string {
     } catch (e) {
         return href;
     }
+}
+
+// ================= Google (HTML) =================
+async function fetchGoogleHtml(params: SearchParams, signal: AbortSignal): Promise<SearchResult[]> {
+    const HL_MAP: Record<string, string> = { tr: 'tr', en: 'en', de: 'de', fr: 'fr', es: 'es' };
+    const usp = new URLSearchParams({ q: params.q, num: '10' });
+    if (HL_MAP[params.lang]) usp.set('hl', HL_MAP[params.lang]);
+    if (params.pageno > 1) usp.set('start', String((params.pageno - 1) * 10));
+
+    const response = await fetch(`https://www.google.com/search?${usp.toString()}`, {
+        method: 'GET',
+        headers: {
+            'User-Agent': UA,
+            'Accept': 'text/html',
+            'Accept-Language': HL_MAP[params.lang] || 'en'
+        },
+        signal
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const html = await response.text();
+    const results: SearchResult[] = [];
+
+    // Google sonuç blokları: <div class="g"> ... </div> (yapı sık değişir, tolerant regex)
+    const blockRegex = /<div[^>]*class="[^"]*\bg\b[^"]*"[^>]*>[\s\S]*?(?=<div[^>]*class="[^"]*\bg\b[^"]*"|$)/g;
+    const blocks = html.match(blockRegex) || [];
+
+    for (const block of blocks) {
+        const linkMatch = block.match(/<a[^>]*href="(https?:\/\/[^"]+)"[^>]*>[\s\S]*?<h3[^>]*>([\s\S]*?)<\/h3>/);
+        if (!linkMatch) continue;
+        const url = decodeHtmlEntities(linkMatch[1]);
+        const title = stripHtml(linkMatch[2]);
+        if (!title || !url) continue;
+        const snippetMatch = block.match(/<div[^>]*(?:data-sncf|class="[^"]*VwiC3b[^"]*")[^>]*>([\s\S]*?)<\/div>/);
+        const snippet = snippetMatch ? stripHtml(snippetMatch[1]) : 'Açıklama mevcut değil.';
+        results.push({ title, url, snippet });
+    }
+
+    return results;
 }
 
 // ================= Mojeek (HTML) =================
@@ -250,8 +332,20 @@ const INSTANCE_POOL = [
 ];
 
 async function trySearxPoolParallel(params: SearchParams, attempts: string[]): Promise<SearchResult[]> {
+    // AŞAMA 2a: Önce SADECE kendi instance'ını dene, cold-start'a bütçe tanıyarak (uzun timeout).
+    // Bu sayede Render'ın uyanması bekleniyor ve düşük kaliteli public havuza düşülmüyor.
+    const primary = INSTANCE_POOL[0];
+    const primaryTasks: RaceTask[] = [
+        { name: `${primary} JSON`, run: (signal) => fetchSearxJson(primary, params, signal) },
+        { name: `${primary} HTML`, run: (signal) => fetchSearxHtml(primary, params, signal) },
+    ];
+    const primaryResults = await raceFirstNonEmpty(primaryTasks, 25000, attempts);
+    if (primaryResults.length > 0) return primaryResults;
+
+    // AŞAMA 2b: Kendi instance başarısız/boşsa geri kalan havuza düş.
+    const restPool = INSTANCE_POOL.slice(1);
     const tasks: RaceTask[] = [];
-    for (const base of INSTANCE_POOL) {
+    for (const base of restPool) {
         tasks.push({ name: `${base} JSON`, run: (signal) => fetchSearxJson(base, params, signal) });
         tasks.push({ name: `${base} HTML`, run: (signal) => fetchSearxHtml(base, params, signal) });
     }
