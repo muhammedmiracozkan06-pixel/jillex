@@ -55,6 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (category === 'general') {
             results = await raceFirstNonEmpty(
                 [
+                    { name: 'Yahoo HTML', run: (signal) => fetchYahooHtml(params, signal) },
                     { name: 'Bing HTML', run: (signal) => fetchBingHtml(params, signal) },
                     { name: 'DuckDuckGo Lite', run: (signal) => fetchDuckDuckGoLite(params, signal) },
                     { name: 'Google HTML', run: (signal) => fetchGoogleHtml(params, signal) },
@@ -146,6 +147,62 @@ function raceFirstNonEmpty(tasks: RaceTask[], timeoutMs: number, attempts: strin
                 });
         });
     });
+}
+
+// ================= Yahoo (HTML) =================
+async function fetchYahooHtml(params: SearchParams, signal: AbortSignal): Promise<SearchResult[]> {
+    const usp = new URLSearchParams({ p: params.q });
+    if (params.pageno > 1) usp.set('b', String((params.pageno - 1) * 10 + 1));
+
+    const response = await fetch(`https://search.yahoo.com/search?${usp.toString()}`, {
+        method: 'GET',
+        headers: {
+            'User-Agent': UA,
+            'Accept': 'text/html',
+            'Cookie': 'A1=; consent=1' // consent duvarını atlamayı dener
+        },
+        signal
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const html = await response.text();
+    const results: SearchResult[] = [];
+
+    // Yahoo sonuç blokları: <div class="algo-sr"> ... </div> veya <li class="algo-sr">
+    const blockRegex = /<div[^>]*class="[^"]*\balgo\b[^"]*"[\s\S]*?(?=<div[^>]*class="[^"]*\balgo\b[^"]*"|<div[^>]*id="web"|$)/g;
+    const blocks = html.match(blockRegex) || [];
+
+    for (const block of blocks) {
+        const linkMatch = block.match(/<a[^>]*class="[^"]*d-ib[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/)
+            || block.match(/<h3[^>]*class="[^"]*title[^"]*"[^>]*>\s*<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/);
+        if (!linkMatch) continue;
+
+        const rawUrl = decodeHtmlEntities(linkMatch[1]);
+        const url = extractYahooRealUrl(rawUrl);
+        const title = stripHtml(linkMatch[2]);
+        if (!title || !url || !url.startsWith('http')) continue;
+
+        const snippetMatch = block.match(/<p[^>]*class="[^"]*fz-ms[^"]*"[^>]*>([\s\S]*?)<\/p>/)
+            || block.match(/<div[^>]*class="[^"]*compText[^"]*"[^>]*>([\s\S]*?)<\/div>/);
+        const snippet = snippetMatch ? stripHtml(snippetMatch[1]) : 'Açıklama mevcut değil.';
+        results.push({ title, url, snippet });
+    }
+
+    return results;
+}
+
+// Yahoo linkleri r.search.yahoo.com üzerinden redirect ediyor, gerçek URL "RU=" içinde
+function extractYahooRealUrl(href: string): string {
+    try {
+        if (href.includes('r.search.yahoo.com') || href.includes('/RU=')) {
+            const match = href.match(/\/RU=([^/]+)\//);
+            if (match) return decodeURIComponent(match[1]);
+        }
+        return href;
+    } catch (e) {
+        return href;
+    }
 }
 
 // ================= Bing (HTML) =================
